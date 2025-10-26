@@ -4,7 +4,51 @@
 
 ---
 
-## 🎯 What This Is
+## 📖 What This Does (Plain English)
+
+**Imagine you're buying something online, but the seller can secretly change the price without you knowing.** That's the problem with current AI agent payments.
+
+**ZKx402 solves this** by giving you a **mathematical receipt** that proves:
+- ✅ The price you're being charged is correct
+- ✅ It matches the seller's public price list
+- ✅ Nobody manipulated the price
+- ✅ You can verify this yourself, instantly, without trusting anyone
+
+**Think of it like**: Getting a detailed itemized receipt from a restaurant that you can mathematically verify is correct, instead of just trusting the total they write down.
+
+### Real-World Example
+
+**Without ZKx402**:
+```
+You: "Hey AI, write me a blog post"
+AI API: "That'll be $0.50"
+You: "Okay... but how do I know that's the right price?"
+AI API: "Just trust me 🤷"
+```
+
+**With ZKx402**:
+```
+You: "Hey AI, write me a blog post"
+AI API: "That'll be $0.50. Here's a cryptographic proof that shows:
+        - Your request was 1,200 tokens
+        - Pro tier costs $0.05 base + $0.00035 per token
+        - Math: $0.05 + (1,200 × $0.00035) = $0.47
+        - No surge pricing today, so final = $0.47
+
+        You can verify this yourself in milliseconds!"
+You: "✅ Verified! Here's payment."
+```
+
+### Who This Helps
+
+- **AI Agents** 🤖 - Can't be overcharged by APIs
+- **API Sellers** 💼 - Can prove they're honest, attract more customers
+- **Enterprises** 🏢 - Get audit trails proving agents didn't overpay
+- **Developers** 👨‍💻 - Build trustless payment systems
+
+---
+
+## 🎯 What This Is (Technical)
 
 **ZKx402** adds **zero-knowledge proofs** to the [x402 payment protocol](https://docs.cdp.coinbase.com/x402) to solve its biggest trust problem: **price verification**.
 
