@@ -19,6 +19,7 @@ WORKDIR /build
 # Copy Rust prover code
 COPY zkx402-agent-auth/jolt-prover ./jolt-prover
 COPY zkx402-agent-auth/zkml-jolt-fork ./zkml-jolt-fork
+COPY zkx402-agent-auth/jolt-atlas-fork ./jolt-atlas-fork
 COPY zkx402-agent-auth/policy-examples ./policy-examples
 
 # Build the JOLT prover (release mode for performance)
