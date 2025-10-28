@@ -1,301 +1,184 @@
-# ZKx402 Quick Start Guide
+# zkX402 Quickstart Guide
 
-**Get running in 5 minutes** ⚡
-
----
+Get started with zkX402 JOLT Atlas agent authorization in 5 minutes.
 
 ## Prerequisites
 
-- Rust (1.70+) - [Install](https://rustup.rs/)
-- Node.js (20+) - [Install](https://nodejs.org/)
-- `curl` and `jq` (for testing)
+- **Rust**: 1.70+ ([Install Rust](https://rustup.rs/))
+- **Node.js**: 20+ ([Install Node.js](https://nodejs.org/))
+- **Python**: 3.8+ (for ONNX model generation)
 
----
+## Installation
 
-## Step 1: Clone the Project ✅
-
-You already have this! You're in `/home/hshadab/zkx402`.
-
----
-
-## Step 2: Generate Your First ZK Proof 🔐
+### 1. Clone Repository
 
 ```bash
-cd zkEngine_dev
-cargo run --release --example zkx402_pricing
+git clone https://github.com/yourusername/zkx402.git
+cd zkx402/zkx402-agent-auth
 ```
 
-**What you'll see**:
-```
-=== ZKx402 Fair-Pricing Proof Generator ===
-
-Public Tariff:
-  Basic:      $0.0100 base + $0.000100/token
-  Pro:        $0.0500 base + $0.000350/token
-  Enterprise: $0.1000 base + $0.000800/token
-
-Request Metadata:
-  Tokens: 1200
-  Tier: 1 (Pro)
-
-Expected price: $0.564000
-
-[1/4] Generating public parameters (step_size=50)...
-      ✓ Setup complete
-
-[2/4] Building WASM execution context...
-      ✓ Context built
-
-[3/4] Generating zero-knowledge proof...
-      ✓ Proof generated
-
-[4/4] Verifying proof...
-      ✓ Proof verified successfully!
-
-✅ Zero-knowledge proof confirms:
-   The price $0.564000 was computed correctly
-   according to the public tariff.
-```
-
-**⏱️ Time**: ~10-15 seconds (first run compiles Rust; subsequent runs ~5s)
-
----
-
-## Step 3: Start the x402 Service 🚀
+### 2. Generate ONNX Models
 
 ```bash
-cd ../zkx402-service
+cd policy-examples/onnx
+python3 create_demo_models.py
+cd ../..
+```
+
+You should see:
+```
+✓ Created simple_auth.onnx
+✓ Created neural_auth.onnx
+✓ Created comparison_demo.onnx
+✓ Created tensor_ops_demo.onnx
+✓ Created matmult_1d_demo.onnx
+```
+
+### 3. Test JOLT Atlas Proof Generation
+
+```bash
+cd jolt-prover
+cargo run --release --example integer_auth_e2e
+```
+
+Expected output:
+```
+[1/5] Loading ONNX model...
+[2/5] Preprocessing JOLT prover...
+[3/5] Preparing authorization inputs...
+[4/5] Generating JOLT Atlas proof...
+      ✓ Proof generated in ~700ms
+[5/5] Verifying proof...
+      ✓ Proof verified!
+
+║  ✅ Transaction AUTHORIZED via ZK proof
+```
+
+### 4. Start Web UI
+
+```bash
+cd ../ui
 npm install
 npm run dev
 ```
 
-**What you'll see**:
-```
-╔═══════════════════════════════════════════════════════════════╗
-║                                                               ║
-║   🔐 ZKx402 Fair-Pricing Service                             ║
-║                                                               ║
-║   Zero-Knowledge Proofs for x402 Protocol                    ║
-║                                                               ║
-╚═══════════════════════════════════════════════════════════════╝
+Open http://localhost:3000 in your browser.
 
-Server running on: http://localhost:3402
+## Quick Test
 
-Public Tariff:
-  Basic:      $0.0100 base + $0.000100/token
-  Pro:        $0.0500 base + $0.000350/token
-  Enterprise: $0.1000 base + $0.000800/token
-```
+### Via Web UI
 
-**⏱️ Time**: ~30 seconds (npm install)
+1. Open http://localhost:3000
+2. Select "Simple Auth" model
+3. Use default values:
+   - Amount: 50 ($0.50)
+   - Balance: 1000 ($10.00)
+   - Velocity 1h: 20
+   - Velocity 24h: 100
+   - Vendor Trust: 80
+4. Click "Generate Proof"
+5. See result: **APPROVED** ✅
 
----
-
-## Step 4: Test the API 🧪
-
-Open a new terminal and run:
+### Via API
 
 ```bash
-# View the public tariff
-curl http://localhost:3402/tariff | jq
-
-# Make a request WITHOUT payment (get 402 + ZK proof)
-curl -X POST http://localhost:3402/api/llm/generate \
+curl -X POST http://localhost:3001/api/generate-proof \
   -H "Content-Type: application/json" \
-  -d '{"prompt":"What is zero-knowledge?","tier":1}' | jq
-```
-
-**Expected response**:
-```json
-{
-  "error": "Payment Required",
-  "details": {
-    "price": "56400",
-    "chain": "base-sepolia",
-    "asset": "usdc",
-    "zkProof": {
-      "type": "fair-pricing",
-      "verified": true,
-      "message": "This price has been cryptographically proven to match the public tariff"
+  -d '{
+    "model": "simple_auth",
+    "inputs": {
+      "amount": "50",
+      "balance": "1000",
+      "velocity_1h": "20",
+      "velocity_24h": "100",
+      "vendor_trust": "80"
     }
-  }
-}
+  }'
 ```
 
-**Look at the headers**:
-```bash
-curl -i -X POST http://localhost:3402/api/llm/generate \
-  -H "Content-Type: application/json" \
-  -d '{"prompt":"Test","tier":1}'
-```
-
-You'll see:
-```
-HTTP/1.1 402 Payment Required
-X-Accept-Payment: base-sepolia:usdc:51400
-X-Pricing-Proof: {"proof":"...","type":"zkengine-wasm",...}
-```
-
----
-
-## Step 5: Simulate a Paid Request 💳
-
-```bash
-# Retry with X-PAYMENT header (simulates payment)
-curl -X POST http://localhost:3402/api/llm/generate \
-  -H "Content-Type: application/json" \
-  -H "X-PAYMENT: mock-payment-token" \
-  -d '{"prompt":"What is zero-knowledge?","tier":1}' | jq
-```
-
-**Response**:
+Response:
 ```json
 {
-  "result": "Mock LLM response to: \"What is zero-knowledge?\"",
-  "usage": {
-    "promptTokens": 5,
-    "completionTokens": 50,
-    "totalTokens": 55
-  },
-  "zkx402": {
-    "message": "Payment verified. This response was paid for with x402 + ZK proof."
+  "approved": true,
+  "output": 100,
+  "verification": true,
+  "proofSize": "15.2 KB",
+  "verificationTime": "45ms",
+  "operations": 21,
+  "zkmlProof": {
+    "commitment": "0x...",
+    "response": "0x...",
+    "evaluation": "0x..."
   }
 }
 ```
 
----
+## Available Models
 
-## What Just Happened? 🤔
+| Model | Type | Proving Time | Description |
+|-------|------|--------------|-------------|
+| `simple_auth` | Rule-based | ~0.7s | Basic threshold checks |
+| `neural_auth` | Neural network | ~1.5s | ML-based risk scoring |
+| `comparison_demo` | Demo | ~0.3s | Comparison operations showcase |
+| `tensor_ops_demo` | Demo | ~0.3s | Tensor operations showcase |
+| `matmult_1d_demo` | Demo | ~0.4s | Matrix multiplication demo |
 
-1. **Agent** sent a request without payment
-2. **Server** computed the fair price based on public tariff
-3. **zkEngine** generated a ZK proof that price = f(tokens, tier, tariff)
-4. **Server** returned 402 with proof in headers
-5. **Agent** (you) verified the proof matches the tariff
-6. **Agent** paid (simulated with `X-PAYMENT` header)
-7. **Server** delivered the response
+## Authorization Logic
 
-**The ZK proof guarantees** the server didn't price-gouge!
+### Simple Auth Rules
 
----
+Transaction approved if **ALL** conditions met:
+1. `amount < 10% of balance`
+2. `vendor_trust > 0.5`
+3. `velocity_1h < 5% of balance`
+4. `velocity_24h < 20% of balance`
 
-## Try Different Tiers 🎚️
+### Neural Auth
 
-```bash
-# Basic tier (cheaper)
-curl -X POST http://localhost:3402/api/llm/generate \
-  -H "Content-Type: application/json" \
-  -d '{"prompt":"Short prompt","tier":0}' | jq .details.price
+ML model trained on transaction patterns:
+- Input: [amount, balance, velocity_1h, velocity_24h, vendor_trust]
+- Architecture: [5] → [8 hidden] → [4 hidden] → [1 output]
+- Output > 0.5 = APPROVED
 
-# Pro tier
-curl -X POST http://localhost:3402/api/llm/generate \
-  -H "Content-Type: application/json" \
-  -d '{"prompt":"Medium prompt","tier":1}' | jq .details.price
+## Next Steps
 
-# Enterprise tier (most expensive)
-curl -X POST http://localhost:3402/api/llm/generate \
-  -H "Content-Type: application/json" \
-  -d '{"prompt":"Long prompt","tier":2}' | jq .details.price
-```
+- **Create Custom Policy**: See `policy-examples/onnx/README.md`
+- **Run Tests**: `npm test` (UI), `cargo test` (Rust)
+- **Deploy**: See `DEPLOYMENT.md`
+- **API Integration**: See `API_REFERENCE.md`
 
-Notice the prices change based on:
-- **Prompt length** (estimated tokens)
-- **Tier** (basic/pro/enterprise)
+## Troubleshooting
 
----
-
-## Run the Full Demo 🎬
+### Model Not Found
 
 ```bash
-cd zkx402-service
-./test-demo.sh
+cd zkx402-agent-auth/policy-examples/onnx
+python3 create_demo_models.py
 ```
 
-This runs a complete end-to-end test with colored output showing:
-1. Tariff fetch
-2. 402 challenge + proof
-3. Payment + response
+### Rust Build Fails
 
----
-
-## Next Steps 📚
-
-### Learn More
-
-- **[README.md](README.md)** - Full documentation + business model
-- **[TECHNICAL_SPEC.md](TECHNICAL_SPEC.md)** - Crypto protocol deep dive
-- **[SUMMARY.md](SUMMARY.md)** - Project overview + competitive analysis
-
-### Customize the Tariff
-
-Edit `zkx402-service/src/index.ts`:
-```typescript
-const PUBLIC_TARIFF: PublicTariff = {
-  tiers: {
-    basic: {
-      basePrice: 10_000n,  // Change this!
-      perUnitPrice: 100n,
-    },
-    // ...
-  },
-  multiplier: 10_000,  // Or add surge pricing here (e.g., 15000 = 1.5x)
-};
-```
-
-### Build Your Own ZK Circuit
-
-1. Edit `zkEngine_dev/wasm/zkx402/pricing.wat`
-2. Add your custom pricing logic (volume discounts, credits, etc.)
-3. Test with `cargo run --example zkx402_pricing`
-4. Integrate into the service
-
-### Deploy to Production
-
-See `TECHNICAL_SPEC.md` Section 7.1 for deployment guide.
-
----
-
-## Troubleshooting 🔧
-
-### "Rust compiler not found"
 ```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-source $HOME/.cargo/env
+rustup update
+cargo clean
+cargo build --release
 ```
 
-### "npm: command not found"
-Install Node.js from https://nodejs.org/
+### UI Won't Start
 
-### Port 3402 already in use
 ```bash
-# Kill existing process
-lsof -ti:3402 | xargs kill -9
-
-# Or use a different port
-PORT=3403 npm run dev
+cd zkx402-agent-auth/ui
+rm -rf node_modules package-lock.json
+npm install
+npm run dev
 ```
 
-### Proof generation takes too long
-This is normal on first run (compiles Rust). Subsequent runs are ~5s.
+## Support
 
-If still slow, try:
-```bash
-cargo build --release  # Pre-compile
-cargo run --release --example zkx402_pricing  # Now it's fast
-```
+- **Issues**: https://github.com/yourusername/zkx402/issues
+- **Documentation**: See README.md and docs/
+- **JOLT Atlas**: https://github.com/ICME-Lab/jolt-atlas
 
 ---
 
-## You're All Set! 🎉
-
-You now have a **working ZK-Fair-Pricing service** with:
-- ✅ Real zero-knowledge proofs (zkEngine)
-- ✅ x402 payment integration
-- ✅ Express REST API
-- ✅ Public tariff system
-
-**Time to ship it!** 🚀
-
----
-
-**Questions?** Open an issue or check the [README](README.md).
+**Next**: Read [API_REFERENCE.md](./API_REFERENCE.md) for API integration details.

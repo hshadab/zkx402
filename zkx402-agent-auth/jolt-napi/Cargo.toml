@@ -1,0 +1,23 @@
+[package]
+name = "jolt-napi"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+napi = "2.16"
+napi-derive = "2.16"
+zkml-jolt-core = { path = "../jolt-atlas-fork/zkml-jolt-core" }
+jolt-core = { path = "../zkml-jolt-fork/jolt-core" }
+onnx-tracer = { path = "../jolt-atlas-fork/onnx-tracer" }
+ark-bn254 = { git = "https://github.com/a16z/arkworks-algebra", branch = "dev/twist-shout" }
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+
+[build-dependencies]
+napi-build = "2.1"
+
+[profile.release]
+lto = true
