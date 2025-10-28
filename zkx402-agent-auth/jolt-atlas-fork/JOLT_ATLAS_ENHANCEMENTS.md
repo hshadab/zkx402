@@ -31,7 +31,26 @@ JOLT Atlas is a zero-knowledge machine learning proof system for ONNX models. Th
 - **Status**: Already supported
 - **Use Case**: `age >= 18`, `score >= threshold`
 
-### 2. Tensor Operations
+### 2. Arithmetic Operations
+
+#### Division (Div) Operation
+- **Locations**:
+  - `onnx-tracer/src/ops/poly.rs`: Added `Div` to `PolyOp` enum, ONNXOpcode mapping, trait bounds, and match statements
+  - `onnx-tracer/src/graph/utilities.rs:798`: Added "Div" string matching
+  - `onnx-tracer/src/tensor/ops.rs:996-1010`: Implemented element-wise division function
+- **Purpose**: Enable division operations for percentage calculations, normalization, and rate computations
+- **Use Case**: `amount / daily_limit`, `balance / 100` (cents to dollars), risk score normalization
+- **Implementation**: Full polynomial operation with scale factor adjustment
+- **Scale Handling**: Output scale = input_scale[0] - input_scale[1]
+
+#### Cast Operation (Type Conversion)
+- **Location**: `onnx-tracer/src/ops/lookup.rs:63`
+- **Purpose**: Type casting between tensor data types with scale adjustment
+- **Use Case**: Converting between int32/float representations, scale normalization
+- **Implementation**: Maps to `ONNXOpcode::Identity` as a lookup operation with scale factor
+- **Function**: `tensor::ops::nonlinearities::const_div` with scale parameter
+
+### 3. Tensor Operations
 
 #### Slice Operation
 - **Location**: `onnx-tracer/src/ops/poly.rs:98`
@@ -45,7 +64,7 @@ JOLT Atlas is a zero-knowledge machine learning proof system for ONNX models. Th
 - **Use Case**: Model composition, residual connections
 - **Implementation**: Added `PolyOp::Identity` to `ONNXOpcode::Identity` conversion
 
-### 3. MatMult Enhancements
+### 4. MatMult Enhancements
 
 #### 1D Tensor Support
 - **Location**: `zkml-jolt-core/src/jolt/instruction/rebase_scale.rs:67-104`
@@ -145,7 +164,8 @@ let (m, n) = if instr.output_dims.len() >= 2 {
 
 ### Arithmetic
 - ✅ Add, Sub, Mul (integer only)
-- ✅ Div (with limitations)
+- ✅ Div (full support with scale factor handling)
+- ✅ Cast (type conversion with scale adjustment)
 - ❌ Float operations (convert to integer-scaled)
 
 ### Comparison
@@ -326,6 +346,15 @@ To extend JOLT Atlas operation support:
 
 ## Changelog
 
+### 2025-10-28
+- ✅ Added Division (Div) operation with full scale factor handling
+  - `onnx-tracer/src/ops/poly.rs`: Added Div to PolyOp enum, ONNXOpcode mapping, trait bounds
+  - `onnx-tracer/src/graph/utilities.rs:798`: Added "Div" string matching
+  - `onnx-tracer/src/tensor/ops.rs:996-1010`: Implemented element-wise division
+- ✅ Added Cast operation for type conversion
+  - `onnx-tracer/src/ops/lookup.rs:63`: Added Cast to ONNXOpcode::Identity mapping
+  - Supports scale adjustment for int32/float conversions
+
 ### 2025-01-27
 - ✅ Added Greater (`>`) operation support
 - ✅ Added Less (`<`) operation support
@@ -338,6 +367,6 @@ To extend JOLT Atlas operation support:
 
 ### Future Work
 - 🔄 Dynamic scale factor extraction
-- 🔄 Division operation support
 - 🔄 Additional activation functions (Tanh, Softmax improvements)
 - 🔄 Batch processing support (if architecturally feasible)
+- 🔄 Expanded type casting support (additional data types)

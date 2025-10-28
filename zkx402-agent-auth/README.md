@@ -211,7 +211,8 @@ assert!(verify_proof(&proof, &output));
 
 ### Arithmetic
 ✅ Add, Sub, Mul (integer only)
-✅ Div (with limitations)
+✅ Div (full support with scale factor handling)
+✅ Cast (type conversion with scale adjustment)
 
 ### Comparison
 ✅ Greater (`>`), GreaterEqual (`>=`), Less (`<`), Equal

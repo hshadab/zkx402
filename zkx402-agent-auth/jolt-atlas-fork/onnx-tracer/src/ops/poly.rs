@@ -1,6 +1,6 @@
 use std::{
     any::Any,
-    ops::{Add, Mul, Neg, Sub},
+    ops::{Add, Div, Mul, Neg, Sub},
 };
 
 use crate::{
@@ -115,6 +115,7 @@ impl<
             + Add<Output = F>
             + Mul<Output = F>
             + Sub<Output = F>
+            + Div<Output = F>
             + Neg<Output = F>
             + std::iter::Sum,
     > Op<F> for PolyOp<F>

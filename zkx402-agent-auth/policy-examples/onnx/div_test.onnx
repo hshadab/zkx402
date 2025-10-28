@@ -1,0 +1,23 @@
+pytorch2.8.0:ï
+0
+amount/Cast_output_0/Cast"Cast*	
+to 
+5
+divisor/Cast_1_output_0/Cast_1"Cast*	
+to 
+5
+/Cast_output_0
+/Cast_1_output_0result/Div"Div
+main_graphZ
+amount
+
+
+Z
+divisor
+
+
+b
+result
+
+
+B
