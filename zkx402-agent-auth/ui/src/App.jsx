@@ -7,7 +7,7 @@ import PerformanceMetrics from './components/PerformanceMetrics'
 import ApiDocs from './components/ApiDocs'
 
 function App() {
-  const [selectedModel, setSelectedModel] = useState('simple_auth')
+  const [selectedModel, setSelectedModel] = useState('simple_threshold')
   const [proofData, setProofData] = useState(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [activeTab, setActiveTab] = useState('simulator') // 'simulator' or 'api'
