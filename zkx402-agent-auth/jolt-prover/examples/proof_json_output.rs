@@ -48,21 +48,24 @@ struct ErrorResult {
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    if args.len() != 7 {
+    if args.len() < 3 {
         let error = ErrorResult {
             error: "Invalid arguments".to_string(),
-            message: "Usage: proof_json_output <model_path> <amount> <balance> <velocity_1h> <velocity_24h> <vendor_trust>".to_string(),
+            message: "Usage: proof_json_output <model_path> <input1> [input2] [input3] ...".to_string(),
         };
         println!("{}", serde_json::to_string(&error).unwrap());
         std::process::exit(1);
     }
 
     let model_path = &args[1];
-    let amount_scaled: i32 = args[2].parse().unwrap_or(0);
-    let balance_scaled: i32 = args[3].parse().unwrap_or(0);
-    let velocity_1h_scaled: i32 = args[4].parse().unwrap_or(0);
-    let velocity_24h_scaled: i32 = args[5].parse().unwrap_or(0);
-    let vendor_trust_scaled: i32 = args[6].parse().unwrap_or(0);
+
+    // Parse all input arguments dynamically
+    let input_vec: Vec<i32> = args[2..]
+        .iter()
+        .map(|arg| arg.parse().unwrap_or(0))
+        .collect();
+
+    let num_inputs = input_vec.len();
 
     // Check if model exists
     if !std::path::Path::new(model_path).exists() {
@@ -82,15 +85,8 @@ fn main() {
     let pp: JoltProverPreprocessing<Fr, PCS, KeccakTranscript> =
         JoltSNARK::prover_preprocess(program_bytecode);
 
-    // Prepare inputs
-    let input_vec = vec![
-        amount_scaled,
-        balance_scaled,
-        velocity_1h_scaled,
-        velocity_24h_scaled,
-        vendor_trust_scaled,
-    ];
-    let input_shape = vec![1, 5];
+    // Prepare inputs with dynamic shape
+    let input_shape = vec![1, num_inputs];
     let input_tensor = match Tensor::new(Some(&input_vec), &input_shape) {
         Ok(t) => t,
         Err(e) => {

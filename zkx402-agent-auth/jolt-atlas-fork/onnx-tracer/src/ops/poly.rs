@@ -392,6 +392,7 @@ where
                 | PolyOp::Neg
                 | PolyOp::Sub
                 | PolyOp::Mult
+                | PolyOp::Div
                 | PolyOp::And
                 | PolyOp::Or
                 | PolyOp::Xor
