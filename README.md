@@ -220,6 +220,23 @@ if (classification.backend === "jolt") {
 - **Python** (3.9+) for ONNX model training
 - **Cargo** and **npm**
 
+### Initial Setup
+
+**Clone with submodules** (includes zkEngine and JOLT Atlas fork):
+```bash
+git clone --recursive https://github.com/hshadab/zkx402.git
+cd zkx402
+```
+
+**If already cloned, initialize submodules**:
+```bash
+git submodule update --init --recursive
+```
+
+This will download:
+- `zkEngine_dev/` - zkEngine WASM prover (for Fair-Pricing)
+- `zkx402-agent-auth/jolt-atlas-fork/` - JOLT Atlas fork with 16x larger tensor support (for Agent-Auth)
+
 ### Option A: Fair-Pricing Only (Quickest)
 
 #### 1. Generate a Real Fair-Pricing ZK Proof

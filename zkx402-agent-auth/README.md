@@ -125,6 +125,41 @@ zkx402-agent-auth/
 
 ## 🚀 Quick Start
 
+### Prerequisites
+
+**Required Software**:
+- Rust 1.70+ (`rustup` recommended)
+- Python 3.9+ (for ONNX model training)
+- Git (with submodule support)
+
+### Initial Setup: Clone with Submodules
+
+This repository uses **git submodules** to include the forked JOLT Atlas code (with 16x larger tensor support).
+
+**Option 1: Clone with submodules** (recommended for new clones):
+```bash
+git clone --recursive https://github.com/hshadab/zkx402.git
+cd zkx402/zkx402-agent-auth
+```
+
+**Option 2: Initialize submodules** (if already cloned):
+```bash
+cd zkx402/zkx402-agent-auth
+git submodule update --init --recursive
+```
+
+**Verify the submodule is loaded**:
+```bash
+ls jolt-atlas-fork/
+# Should show: Cargo.toml, onnx-tracer, zkml-jolt-core, etc.
+```
+
+**Check the fork modification**:
+```bash
+grep MAX_TENSOR_SIZE jolt-atlas-fork/onnx-tracer/src/constants.rs
+# Should output: pub const MAX_TENSOR_SIZE: usize = 1024;
+```
+
 ### Step 0: Minimal Working Example (Start Here!)
 
 Before diving into complex velocity policies, verify your JOLT Atlas setup works:

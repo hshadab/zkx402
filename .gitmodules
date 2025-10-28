@@ -1,3 +1,6 @@
 [submodule "zkEngine_dev"]
 	path = zkEngine_dev
 	url = https://github.com/ICME-Lab/zkEngine_dev.git
+[submodule "zkx402-agent-auth/jolt-atlas-fork"]
+	path = zkx402-agent-auth/jolt-atlas-fork
+	url = https://github.com/hshadab/jolt-atlas.git
