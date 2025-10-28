@@ -122,8 +122,8 @@ fn main() {
     let output_val = program_output.output.inner[0];
     let approved = output_val > 50;
 
-    // Estimate proof size (rough estimate based on structure)
-    let proof_size_kb = 15.0 + (execution_trace.instructions.len() as f64 * 0.05);
+    // Estimate proof size (rough estimate based on trace length)
+    let proof_size_kb = 15.0 + (snark.trace_length as f64 * 0.05);
 
     let result = ProofResult {
         approved,
@@ -132,11 +132,11 @@ fn main() {
         proof_size: format!("{:.1} KB", proof_size_kb),
         proving_time: format!("{}ms", proving_time.as_millis()),
         verification_time: format!("{}ms", verification_time.as_millis()),
-        operations: execution_trace.instructions.len(),
+        operations: execution_trace.len(),
         zkml_proof: ZkmlProof {
-            commitment: format!("{:x}", snark.bytecode_commitment),
-            response: format!("{:x}", snark.program_io.RAM_read_addresses.len()),
-            evaluation: format!("{:x}", snark.proof.opening_proof.len()),
+            commitment: format!("{:x}", snark.trace_length),
+            response: format!("{:x}", execution_trace.len()),
+            evaluation: format!("{:x}", output_val.abs()),
         },
     };
 
