@@ -79,6 +79,83 @@ We've enhanced the [JOLT Atlas](https://github.com/ICME-Lab/jolt-atlas) zero-kno
 
 **Benefit**: Balance interpretability (rule-based) with flexibility (ML)
 
+## Production-Ready Curated Models
+
+We provide **10 production-ready ONNX authorization models** covering the most common use cases. These models are fully tested, validated, and ready to use with JOLT Atlas proofs.
+
+### What Are These Models?
+
+Think of these as **pre-built authorization rules that agents can prove they've followed**—without revealing the private data involved. For example:
+
+- An AI agent can prove "I checked that the account balance was sufficient" without revealing the actual balance amount
+- An agent can prove "The vendor trust score met the minimum threshold" without revealing the vendor's identity
+- An agent can prove "Spending velocity was within limits" without revealing transaction history
+
+### How They Work (Plain English)
+
+1. **The Setup**: You choose an authorization model (e.g., "simple_threshold" for basic balance checks)
+2. **The Check**: The agent runs the model with private inputs (amount=$50, balance=$100)
+3. **The Proof**: JOLT Atlas generates a zero-knowledge proof showing the model approved the transaction
+4. **The Verification**: Anyone can verify the proof without seeing the private inputs
+5. **The Result**: Trust without transparency—privacy preserved, authorization verified
+
+### Available Models
+
+| Model | What It Does | When To Use |
+|-------|-------------|-------------|
+| **simple_threshold** | Checks if you have enough money | Basic wallet balance checks |
+| **percentage_limit** | Limits spending to X% of balance | "Don't spend more than 10% at once" |
+| **vendor_trust** | Requires minimum vendor reputation | Marketplace transactions |
+| **velocity_1h** | Limits spending per hour | Rate limiting, fraud prevention |
+| **velocity_24h** | Limits spending per day | Daily spending caps |
+| **daily_limit** | Hard cap on daily spending | Budget enforcement |
+| **age_gate** | Checks minimum age | Age-restricted purchases |
+| **multi_factor** | Combines balance + velocity + trust | High-security transactions |
+| **composite_scoring** | Weighted risk score from multiple factors | Advanced risk assessment |
+| **risk_neural** | ML-based risk scoring | Sophisticated fraud detection |
+
+### Quick Start with Curated Models
+
+```bash
+# 1. Test a model with sample inputs
+cd policy-examples/onnx/curated
+python3 test_all_models.py
+
+# 2. Use a specific model
+# Example: Check if $50 transaction is OK with $100 balance
+cd ../../jolt-prover
+./target/release/examples/proof_json_output \
+  ../policy-examples/onnx/curated/simple_threshold.onnx \
+  5000 10000  # $50 and $100 in cents
+```
+
+### Real-World Example
+
+**Scenario**: An AI shopping agent needs to buy office supplies ($75) but shouldn't reveal the company's bank balance.
+
+**Without zkML**:
+- ❌ Agent reveals balance to vendor: "I have $10,000, so $75 is fine"
+- ❌ Privacy compromised, creates security risk
+
+**With zkML (using simple_threshold.onnx)**:
+- ✅ Agent generates proof: "I ran the authorization model and it approved"
+- ✅ Vendor verifies proof: Valid ✓
+- ✅ Balance stays private, authorization confirmed
+
+### Model Details
+
+All 10 models are:
+- ✅ **Validated**: Pass comprehensive test suites (29 test cases)
+- ✅ **JOLT-Compatible**: Use only supported operations (Add, Sub, Mul, Div, Greater, Less, Cast, Clip)
+- ✅ **Production-Ready**: Tested with ONNX Runtime and ready for proof generation
+- ✅ **Documented**: Full specifications in [CATALOG.md](policy-examples/onnx/curated/CATALOG.md)
+
+See detailed documentation:
+- [README.md](policy-examples/onnx/curated/README.md) - Quick start guide
+- [CATALOG.md](policy-examples/onnx/curated/CATALOG.md) - Complete model specifications
+- [TEST_RESULTS.md](policy-examples/onnx/curated/TEST_RESULTS.md) - Test results and benchmarks
+- [JOLT_ENHANCEMENT_USAGE.md](policy-examples/onnx/curated/JOLT_ENHANCEMENT_USAGE.md) - Which enhancements each model uses
+
 ## Quick Start
 
 ### 1. Generate Demo ONNX Models
@@ -130,6 +207,14 @@ zkx402-agent-auth/
 │   │   └── velocity_auth.rs          # Velocity check example
 │   └── src/lib.rs                    # Proof generation library
 ├── policy-examples/onnx/              # ONNX model generation scripts
+│   ├── curated/                      # ⭐ 10 production-ready models
+│   │   ├── README.md                 # Quick start guide
+│   │   ├── CATALOG.md                # Complete model specifications
+│   │   ├── TEST_RESULTS.md           # Test results and benchmarks
+│   │   ├── JOLT_ENHANCEMENT_USAGE.md # Enhancement usage analysis
+│   │   ├── test_all_models.py        # Automated test suite
+│   │   ├── generate_all_models.py    # Model regeneration script
+│   │   └── *.onnx                    # 10 curated authorization models
 │   ├── create_demo_models.py         # Generate all 5 demo models
 │   ├── test_models.py                # Validate ONNX models
 │   └── *.onnx                        # Pre-built demonstration models
@@ -142,11 +227,17 @@ zkx402-agent-auth/
 
 ### Main Documentation
 - **[JOLT_ATLAS_ENHANCEMENTS.md](jolt-atlas-fork/JOLT_ATLAS_ENHANCEMENTS.md)**: Complete technical documentation of all JOLT Atlas enhancements
-  - Enhanced operations (Greater, Less, Slice, Identity, MatMult 1D)
+  - Enhanced operations (Greater, Less, Div, Cast, Slice, Identity, MatMult 1D)
   - Tensor size limits and shape support
   - Model creation guidelines
   - Performance characteristics
   - Known limitations and workarounds
+
+### Curated Models
+- **[policy-examples/onnx/curated/README.md](policy-examples/onnx/curated/README.md)**: Quick start guide for 10 production-ready models
+- **[policy-examples/onnx/curated/CATALOG.md](policy-examples/onnx/curated/CATALOG.md)**: Complete specifications for all 10 models
+- **[policy-examples/onnx/curated/TEST_RESULTS.md](policy-examples/onnx/curated/TEST_RESULTS.md)**: Validation results and performance benchmarks
+- **[policy-examples/onnx/curated/JOLT_ENHANCEMENT_USAGE.md](policy-examples/onnx/curated/JOLT_ENHANCEMENT_USAGE.md)**: Analysis of which enhancements each model uses
 
 ### Examples
 - **[policy-examples/onnx/README.md](policy-examples/onnx/README.md)**: Guide to creating ONNX authorization policies
