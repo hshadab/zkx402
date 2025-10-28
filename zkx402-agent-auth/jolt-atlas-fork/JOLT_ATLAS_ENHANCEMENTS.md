@@ -8,6 +8,7 @@ JOLT Atlas is a zero-knowledge machine learning proof system for ONNX models. Th
 - Comparison-based authorization policies
 - Complex tensor operations (slicing, reshaping, identity)
 - Matrix multiplication with variable tensor dimensions
+- Increased tensor size limits (64→1024 elements) for larger authorization models
 - Integer-only neural networks for efficient zkML proofs
 
 ## Enhanced Operations
@@ -331,6 +332,7 @@ To extend JOLT Atlas operation support:
 - ✅ Added Slice operation support
 - ✅ Added Identity operation support
 - ✅ Fixed MatMult 1D tensor dimension handling
+- ✅ Increased `MAX_TENSOR_SIZE` from 64→1024 elements (supports larger models with 18+ features)
 - ✅ Added comprehensive documentation
 - ✅ Created example ONNX models
 
