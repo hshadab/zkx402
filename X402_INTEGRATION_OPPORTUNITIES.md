@@ -19,10 +19,10 @@ The [Coinbase x402 protocol](https://github.com/coinbase/x402) is an open-source
 **Missing capabilities (zkX402 opportunity):**
 - ❌ Real-time fraud detection
 - ❌ ML-based authorization policies
-- ❌ Privacy-preserving decision explanations
+- ❌ Verifiable authorization proofs (trustless verification)
 - ❌ Context-aware payment approval
-- ❌ Multi-factor authorization rules
-- ❌ Agent-specific spending limits
+- ❌ Auditable authorization decisions
+- ❌ Agent-specific spending limits with tamper-proof enforcement
 
 ---
 
@@ -73,8 +73,8 @@ Response:
 
 **Benefits:**
 - ✅ Drop-in replacement for existing x402 facilitators
-- ✅ Privacy-preserving authorization (no sensitive data exposed)
-- ✅ Auditable proof of correct policy execution
+- ✅ Verifiable authorization (cryptographic proof of correct execution)
+- ✅ Trustless verification - don't trust the decision, verify it
 - ✅ Works with all x402 SDKs (Go, Java, Python, TypeScript)
 
 **Implementation Priority**: **HIGH** - This is the most natural integration point.
@@ -123,10 +123,10 @@ app.use('/api/premium',
 **What**: Specialized service for authorizing AI agent payments with context-aware policies.
 
 **Use Case**: x402's ROADMAP.md mentions AI agents extensively. zkX402 can provide:
-- Per-agent spending limits with zkML proofs
+- Per-agent spending limits with verifiable zkML proofs
 - Velocity-based fraud detection for autonomous agents
 - Multi-signature authorization for high-value agent transactions
-- Privacy-preserving audit logs
+- Tamper-proof, auditable authorization logs
 
 **How it works:**
 ```typescript
@@ -155,8 +155,8 @@ if (authorized.zkProof.approved) {
 **Benefits:**
 - ✅ Prevents runaway AI agent spending
 - ✅ Real-time anomaly detection for agent behavior
-- ✅ Privacy-preserving (agent internals not revealed)
-- ✅ Cryptographic proof of policy compliance
+- ✅ Verifiable authorization (cryptographic proofs)
+- ✅ Trustless policy compliance - don't trust, verify
 
 **Implementation Priority**: **MEDIUM** - Timely given x402's AI agent focus.
 
@@ -250,10 +250,10 @@ if (authorized.approved) {
 ```
 
 **Benefits:**
-- ✅ Privacy-preserving (approvers don't see each other's reasoning)
-- ✅ Cryptographic proof of policy compliance
-- ✅ Prevents collusion (each proof is independent)
-- ✅ Auditable approval trail
+- ✅ Verifiable (each approver provides cryptographic proof)
+- ✅ Trustless multi-party authorization
+- ✅ Tamper-proof (can't fake approvals - each proof is independent)
+- ✅ Fully auditable approval trail
 
 **Implementation Priority**: **LOW** - Niche use case, but high-value.
 
@@ -479,20 +479,20 @@ POST /authorize (NEW)
 
 | Feature | Traditional | zkX402 |
 |---------|-------------|---------|
-| **Privacy** | Exposes transaction details | Zero-knowledge proofs |
+| **Verifiability** | Trust the vendor | Cryptographic proof - don't trust, verify |
 | **Speed** | 500ms - 5s | 1-2s (real-time ML) |
-| **Explainability** | Black box | Cryptographic proof |
-| **Trust** | Centralized vendor | Verifiable on-chain |
+| **Explainability** | Black box | Verifiable proof of correct execution |
+| **Trustlessness** | Centralized vendor | Trustless - anyone can verify |
 | **Customization** | Limited | Upload custom ONNX models |
 | **Cost** | $0.10+ per check | $0.001 per proof |
 
 ### Why zkX402 for x402 Ecosystem?
 
-1. **Native HTTP Integration** - Works seamlessly with x402's HTTP-native design
-2. **Chain-Agnostic** - Like x402, works across EVM, Base, Solana
-3. **Open Standard** - No vendor lock-in, open-source prover
-4. **Agent-First** - Built for autonomous AI agent payments
-5. **Privacy-Preserving** - Aligns with crypto ethos
+1. **Verifiable Authorization** - Cryptographic proofs make authorization trustless
+2. **Native HTTP Integration** - Works seamlessly with x402's HTTP-native design
+3. **Chain-Agnostic** - Like x402, works across EVM, Base, Solana
+4. **Open Standard** - No vendor lock-in, open-source prover
+5. **Agent-First** - Built for autonomous AI agent payments with verifiable controls
 
 ---
 
@@ -589,11 +589,12 @@ cd zkx402
 
 ## Conclusion
 
-The x402 protocol revolutionizes payments, but **authorization is the missing piece**. zkX402 fills this gap with:
+The x402 protocol revolutionizes payments, but **verifiable authorization is the missing piece**. zkX402 fills this gap with:
 
-✅ **Privacy-preserving** fraud detection
-✅ **Real-time** ML authorization
-✅ **Cryptographically verifiable** proofs
+✅ **Trustless** authorization - don't trust, verify cryptographically
+✅ **Real-time** ML authorization with verifiable proofs
+✅ **Tamper-proof** - cryptographic guarantees of correct execution
+✅ **Auditable** - anyone can verify authorization decisions
 ✅ **HTTP-native** like x402
 ✅ **Chain-agnostic** like x402
 ✅ **Open-source** like x402

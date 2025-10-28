@@ -1,6 +1,6 @@
-# zkX402: Zero-Knowledge Agent Authorization for x402
+# zkX402: Verifiable Agent Authorization for x402
 
-Privacy-preserving authorization for AI agents in the x402 payment protocol using JOLT Atlas ONNX inference proofs.
+Trustless, verifiable authorization for AI agents in the x402 payment protocol using JOLT Atlas ONNX inference proofs.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/rust-1.75%2B-orange.svg)](https://www.rust-lang.org/)
@@ -9,16 +9,23 @@ Privacy-preserving authorization for AI agents in the x402 payment protocol usin
 
 ## 🚀 What is zkX402?
 
-zkX402 brings **zero-knowledge authorization to the x402 payment protocol**, enabling AI agents to prove they're authorized to make payments without revealing private financial data. Using JOLT Atlas ONNX inference proofs, agents can cryptographically demonstrate policy compliance while keeping balances, spending limits, and transaction history completely private.
+zkX402 brings **verifiable authorization to the x402 payment protocol**, enabling AI agents to generate cryptographic proofs that their authorization decisions were computed correctly. Using JOLT Atlas ONNX inference proofs, agents can demonstrate that policies were executed faithfully - making authorization **trustless**, **tamper-proof**, and **auditable**.
 
-**The Innovation**: Zero-knowledge proofs of correct ONNX model inference allow agents to prove authorization decisions without exposing the sensitive data that went into those decisions.
+**The Innovation**: Zero-knowledge proofs of correct ONNX model inference provide cryptographic guarantees that authorization logic executed correctly. The x402 ecosystem doesn't need to trust the agent's claim of "approved" - they can **verify** it cryptographically.
+
+**What zkX402 Adds to x402**:
+- ✅ **Verifiable Inference**: Cryptographic proof that the ML model executed correctly with given inputs
+- ✅ **Trustless Authorization**: Don't trust agent decisions - verify them cryptographically
+- ✅ **Tamper-Proof Policies**: Can't fake or manipulate authorization logic execution
+- ✅ **Auditable Decisions**: Anyone can verify proofs match claimed authorization outcomes
+- ✅ **Transparent Enforcement**: Policies are provably executed as specified
 
 **x402 Integration Use Cases**:
-- 💰 **Agent Spending Authorization**: Prove `amount < budget` without revealing budget in x402 payment flows
-- 🔐 **Payment Access Control**: Prove eligibility for x402 transactions without revealing credentials
-- 📊 **Risk-Based Payments**: Prove low-risk x402 transaction without revealing financial history
-- 🤝 **Compliance Verification**: Prove adherence to spending policies in x402 ecosystem without exposing data
-- 🏦 **Multi-Agent Commerce**: Enable trustless agent-to-agent x402 transactions with privacy-preserving authorization
+- 💰 **Verifiable Agent Spending**: Cryptographically prove spending policy was checked correctly
+- 🔐 **Trustless Payment Gates**: Verify authorization logic executed faithfully in x402 flows
+- 📊 **Auditable Risk Assessment**: Proof that fraud detection model ran correctly
+- 🤝 **Compliance Verification**: Provably demonstrate policy adherence for x402 transactions
+- 🏦 **Trustless Agent Commerce**: Enable verifiable agent-to-agent x402 payments without trusted intermediaries
 
 ## ✨ Features
 
@@ -163,13 +170,13 @@ We've extended JOLT Atlas to support practical authorization use cases for x402 
 - **Increased Tensor Size Limits**: `MAX_TENSOR_SIZE` increased from 64→1024 to support larger authorization models (e.g., 18 features × 32-bit weights = 576 elements)
 
 **What This Enables for x402**:
-- ✅ **Privacy-Preserving Payment Authorization**: Prove spending limits without revealing balances
-- ✅ **Rule-Based Payment Policies**: Threshold checks for x402 transactions (amount < 10% of balance)
-- ✅ **Neural Network Authorization**: ML-based risk scoring for x402 payments
-- ✅ **Velocity Controls**: Rate limiting proofs for x402 agent spending
-- ✅ **Multi-Criteria Decisions**: Complex authorization logic with zero-knowledge proofs
+- ✅ **Verifiable Payment Authorization**: Cryptographically prove spending limit checks executed correctly
+- ✅ **Trustless Rule-Based Policies**: Verifiable threshold checks for x402 transactions (amount < 10% of balance)
+- ✅ **Auditable Neural Network Decisions**: Provably demonstrate ML risk scoring was computed correctly
+- ✅ **Tamper-Proof Velocity Controls**: Cryptographic proof that rate limiting was enforced faithfully
+- ✅ **Transparent Multi-Criteria Logic**: Verifiable complex authorization with zero-knowledge proofs
 
-**Core Innovation**: These enhancements enable **ONNX inference proofs** - cryptographic proofs that an ONNX model was executed correctly with specific inputs, producing a specific output, without revealing the private input data. This makes privacy-preserving authorization possible in the x402 ecosystem.
+**Core Innovation**: These enhancements enable **verifiable ONNX inference** - cryptographic proofs that an ONNX model was executed correctly with specific inputs, producing a specific output. The x402 ecosystem can verify authorization decisions cryptographically rather than trusting agent claims, making authorization **trustless** and **auditable**.
 
 See [JOLT_ATLAS_ENHANCEMENTS.md](zkx402-agent-auth/jolt-atlas-fork/JOLT_ATLAS_ENHANCEMENTS.md) for technical details.
 
@@ -258,7 +265,7 @@ import torch
 class X402RuleBasedAuth(torch.nn.Module):
     """
     Rule-based authorization for x402 payments.
-    Generates inference proof that payment is authorized without revealing private data.
+    Generates verifiable inference proof that authorization logic executed correctly.
     """
     def forward(self, amount, balance, velocity_1h, velocity_24h, trust):
         # Scale to integers (100 = 1.00) for deterministic ZK proofs
@@ -306,7 +313,7 @@ class X402NeuralAuth(torch.nn.Module):
         return approved
 ```
 
-**Key Point**: These ONNX models generate **inference proofs** - cryptographic proofs that the model was executed correctly with the agent's private data (balance, velocity), producing an authorization decision, without revealing the private data to the x402 payment recipient.
+**Key Point**: These ONNX models generate **verifiable inference proofs** - cryptographic proofs that the model was executed correctly with specific inputs (balance, velocity), producing a verifiable authorization decision. The x402 ecosystem can cryptographically verify the decision is correct rather than trusting the agent's claim.
 
 ## 🧪 Testing
 
@@ -381,11 +388,11 @@ zkx402/
 const axios = require('axios');
 
 /**
- * Generate inference proof for x402 payment authorization
+ * Generate verifiable inference proof for x402 payment authorization
  * @param {number} amount - Payment amount in x402 transaction
- * @param {number} balance - Agent's private balance (not revealed)
+ * @param {number} balance - Agent's balance used in authorization check
  * @param {number} trust - Vendor trust score
- * @returns {Object} Proof of authorization for x402 payment
+ * @returns {Object} Verifiable proof of authorization for x402 payment
  */
 async function authorizeX402Payment(amount, balance, trust) {
   const response = await axios.post('http://localhost:4000/api/v1/proof', {
@@ -399,11 +406,11 @@ async function authorizeX402Payment(amount, balance, trust) {
     }
   });
 
-  // Returns inference proof that authorization was computed correctly
-  // without revealing private balance or velocity data
+  // Returns verifiable proof that authorization logic executed correctly
+  // x402 recipients can cryptographically verify the decision is valid
   return {
     approved: response.data.approved,
-    zkProof: response.data.zkmlProof,  // Attach to x402 payment
+    zkProof: response.data.zkmlProof,  // Attach to x402 payment for verification
     requestId: response.data.requestId
   };
 }
@@ -421,15 +428,15 @@ import requests
 
 def authorize_x402_payment(amount, balance, trust):
     """
-    Generate inference proof for x402 payment authorization.
+    Generate verifiable inference proof for x402 payment authorization.
 
     Args:
         amount: Payment amount in x402 transaction
-        balance: Agent's private balance (kept private via ZK proof)
+        balance: Agent's balance used in authorization check
         trust: Vendor trust score
 
     Returns:
-        dict: Inference proof for x402 payment authorization
+        dict: Verifiable proof of authorization for x402 payment
     """
     response = requests.post('http://localhost:4000/api/v1/proof', json={
         'model': 'simple_auth',
@@ -463,15 +470,15 @@ print(f'Inference Proof: {proof["inference_proof"]["commitment"][:32]}...')
 use zkml_jolt_core::jolt::*;
 use onnx_tracer::{model, tensor::Tensor};
 
-/// Generate ONNX inference proof for x402 payment authorization
+/// Generate verifiable ONNX inference proof for x402 payment authorization
 ///
 /// # Arguments
 /// * `amount` - Payment amount in x402 transaction
-/// * `balance` - Agent's private balance (not revealed in proof)
+/// * `balance` - Agent's balance used in authorization check
 /// * `trust` - Vendor trust score
 ///
 /// # Returns
-/// * Inference proof that authorization was computed correctly
+/// * Verifiable proof that authorization logic executed correctly
 fn authorize_x402_payment(amount: i32, balance: i32, trust: i32) -> Result<(bool, JoltProof)> {
     let model_obj = model(&"simple_auth.onnx".into());
     let inputs = vec![amount, balance, 20, 100, trust];
