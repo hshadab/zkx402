@@ -1,0 +1,66 @@
+# Git
+.git
+.gitignore
+.gitmodules
+
+# Documentation
+*.md
+!README.md
+docs/
+archived-docs/
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+.npm
+
+# Rust
+target/
+**/.cargo-home/
+**/Cargo.lock
+
+# Build artifacts
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+.nyc_output/
+*.test.js.snap
+
+# Logs
+logs/
+*.log
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Temp files
+tmp/
+temp/
+*.tmp
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Large directories not needed for build
+zkEngine_dev/
+ui/tests/
+
+# API server (separate service, not in main app)
+api-server/

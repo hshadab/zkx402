@@ -408,6 +408,19 @@ app.post('/api/models/:modelId/validate', (req, res) => {
   }
 });
 
+// Serve static frontend in production (must be after API routes)
+if (process.env.NODE_ENV === 'production') {
+  const distPath = path.join(__dirname, 'dist');
+  console.log(`Serving static files from: ${distPath}`);
+
+  app.use(express.static(distPath));
+
+  // Serve index.html for all non-API routes (SPA routing)
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+}
+
 // Start server
 app.listen(PORT, () => {
   console.log('='.repeat(60));

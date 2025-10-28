@@ -1,0 +1,51 @@
+# Render Blueprint for zkX402 Agent Authorization
+# Documentation: https://render.com/docs/blueprint-spec
+
+services:
+  # Main zkX402 Web Service (UI + API + JOLT Prover)
+  - type: web
+    name: zkx402-agent-auth
+    env: docker
+    region: oregon # Choose: oregon, ohio, virginia, frankfurt, singapore
+    plan: standard # Upgrade to standard or pro for better performance
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+
+    # Auto-deploy on push to main branch
+    branch: main
+
+    # Environment variables
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MODELS_DIR
+        value: /app/policy-examples/onnx
+      - key: JOLT_PROVER_DIR
+        value: /app/jolt-prover
+
+    # Health check endpoint
+    healthCheckPath: /api/health
+
+    # Scaling configuration (adjust based on traffic)
+    scaling:
+      minInstances: 1
+      maxInstances: 3
+      targetMemoryPercent: 80
+      targetCPUPercent: 80
+
+    # Disk storage for uploaded models (optional)
+    disk:
+      name: zkx402-models
+      mountPath: /app/policy-examples/onnx
+      sizeGB: 1
+
+# Optional: Environment groups for shared config
+# envVarGroups:
+#   - name: zkx402-config
+#     envVars:
+#       - key: MAX_PROOF_SIZE
+#         value: "10485760"
+#       - key: RATE_LIMIT
+#         value: "100"

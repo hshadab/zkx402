@@ -5,6 +5,7 @@ Complete guide for deploying zkX402 Agent Authorization to production.
 ## Table of Contents
 
 - [Deployment Options](#deployment-options)
+- [Render.com Deployment](#rendercom-deployment) ⭐ **Recommended**
 - [Docker Deployment](#docker-deployment)
 - [Railway Deployment](#railway-deployment)
 - [Manual Server Deployment](#manual-server-deployment)
@@ -15,10 +16,91 @@ Complete guide for deploying zkX402 Agent Authorization to production.
 
 | Option | Difficulty | Cost | Best For |
 |--------|------------|------|----------|
+| **Render.com** ⭐ | **Easy** | **$25-85/mo** | **Production-ready, auto-deploy, persistent storage** |
 | Docker | Easy | Free-$ | Development, small scale |
 | Railway | Easy | $5-20/mo | Quick production deployment |
 | VPS (Digital Ocean, AWS) | Medium | $10-50/mo | Full control, scaling |
 | Kubernetes | Hard | $$$ | Enterprise, high availability |
+
+---
+
+## Render.com Deployment
+
+**✅ Recommended for production deployment of zkX402 with real JOLT Atlas proofs.**
+
+Render.com provides:
+- ✅ Automatic Docker builds with Rust + Node.js
+- ✅ Persistent storage for model uploads
+- ✅ Auto-deploy on git push
+- ✅ Free SSL certificates
+- ✅ Health monitoring and auto-restart
+- ✅ Easy scaling and rollbacks
+
+### Quick Deploy
+
+**Option 1: One-Click Deploy Button**
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/hshadab/zkx402)
+
+**Option 2: Blueprint Deploy**
+
+```bash
+# 1. Ensure deployment files are committed
+git add Dockerfile render.yaml start.sh .dockerignore
+git commit -m "Add Render deployment config"
+git push origin main
+
+# 2. Go to https://dashboard.render.com
+# 3. Click "New" → "Blueprint"
+# 4. Connect your GitHub repo
+# 5. Render auto-detects render.yaml and deploys
+```
+
+**Option 3: Manual Setup**
+
+```bash
+# 1. Log in to Render: https://dashboard.render.com
+# 2. Click "New" → "Web Service"
+# 3. Connect GitHub repository
+# 4. Configure:
+#    - Name: zkx402-agent-auth
+#    - Environment: Docker
+#    - Dockerfile Path: ./Dockerfile
+#    - Instance Type: Standard or higher
+#    - Branch: main
+# 5. Add environment variables:
+#    NODE_ENV=production
+# 6. Set health check path: /api/health
+# 7. Click "Create Web Service"
+```
+
+### Build Time
+
+- **First build**: ~10-15 minutes (compiles Rust prover)
+- **Subsequent builds**: ~5-8 minutes (cached layers)
+
+### Performance
+
+**Proof Generation Times** (Standard instance):
+- Simple Auth: ~1.5-2.0s
+- Neural Auth: ~2.5-3.5s
+
+**Instance Recommendations**:
+- **Standard** ($25/mo): Good for testing
+- **Pro** ($85/mo): Recommended for production
+- **Pro Plus** ($185/mo): High traffic applications
+
+### Complete Documentation
+
+📚 **See [RENDER_DEPLOYMENT.md](./RENDER_DEPLOYMENT.md) for complete guide including:**
+- Step-by-step deployment instructions
+- Configuration options
+- Scaling and monitoring
+- Troubleshooting
+- Cost optimization
+- Security best practices
+
+---
 
 ## Docker Deployment
 
