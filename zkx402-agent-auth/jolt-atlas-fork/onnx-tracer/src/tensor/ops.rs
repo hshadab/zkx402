@@ -993,6 +993,22 @@ pub fn mult<T: TensorType + Mul<Output = T> + std::marker::Send + std::marker::S
     Ok(output)
 }
 
+/// Element-wise division operation.
+/// # Arguments
+///
+/// * `t` - Tensors to divide
+pub fn div<T: TensorType + Div<Output = T> + std::marker::Send + std::marker::Sync>(
+    t: &[Tensor<T>],
+) -> Result<Tensor<T>, TensorError> {
+    // calculate value of output
+    let mut output: Tensor<T> = t[0].clone();
+    for e in t[1..].iter() {
+        output = (output / e.clone())?;
+    }
+
+    Ok(output)
+}
+
 /// Rescale a tensor with a const integer (similar to const_mult).
 /// # Arguments
 ///

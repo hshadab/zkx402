@@ -43,6 +43,7 @@ pub enum PolyOp<F: TensorType + PartialOrd> {
     Sub,
     Neg,
     Mult,
+    Div,
     Identity,
     Reshape(Vec<usize>),
     MoveAxis {
@@ -88,6 +89,7 @@ impl<F: TensorType + PartialOrd> From<&PolyOp<F>> for ONNXOpcode {
             PolyOp::Add => ONNXOpcode::Add,
             PolyOp::Sub => ONNXOpcode::Sub,
             PolyOp::Mult => ONNXOpcode::Mul,
+            PolyOp::Div => ONNXOpcode::Div,
             PolyOp::Pow(_) => ONNXOpcode::Pow,
             PolyOp::Einsum { .. } => ONNXOpcode::MatMult,
             PolyOp::Sum { .. } => ONNXOpcode::Sum,
@@ -139,6 +141,7 @@ where
             PolyOp::Add => "ADD".into(),
             PolyOp::Mult => "MULT".into(),
             PolyOp::Sub => "SUB".into(),
+            PolyOp::Div => "DIV".into(),
             PolyOp::Sum { .. } => "SUM".into(),
             PolyOp::MeanOfSquares { axes } => {
                 format!("MEANOFSQUARES (axes={axes:?})")
@@ -217,6 +220,7 @@ where
             PolyOp::Neg => tensor::ops::neg(&inputs[0]),
             PolyOp::Sub => tensor::ops::sub(&inputs),
             PolyOp::Mult => tensor::ops::mult(&inputs),
+            PolyOp::Div => tensor::ops::div(&inputs),
             PolyOp::Conv {
                 kernel: a,
                 bias,
@@ -347,6 +351,11 @@ where
                 scale_a
             }
             PolyOp::Sub => in_scales[0],
+            PolyOp::Div => {
+                let mut scale = in_scales[0];
+                scale -= in_scales[1];
+                scale
+            }
             PolyOp::Mult => {
                 let mut scale = in_scales[0];
                 scale += in_scales[1];

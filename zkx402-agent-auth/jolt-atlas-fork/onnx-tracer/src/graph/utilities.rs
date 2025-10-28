@@ -795,6 +795,7 @@ pub fn new_op_from_onnx(
         }
         "Add" => SupportedOp::Linear(PolyOp::Add),
         "Sub" => SupportedOp::Linear(PolyOp::Sub),
+        "Div" => SupportedOp::Linear(PolyOp::Div),
         "Mul" => {
             let mut op = SupportedOp::Linear(PolyOp::Mult);
 
