@@ -1,0 +1,27 @@
+pytorch2.8.0: 
+,
+spent_1h
+amount/Add_output_0/Add"Add
+K
+/Add_output_0
+limit_1h/LessOrEqual_output_0/LessOrEqual"LessOrEqual
+9
+/LessOrEqual_output_0approved/Cast"Cast*	
+to 
+main_graphZ
+amount
+
+
+Z
+spent_1h
+
+
+Z
+limit_1h
+
+
+b
+approved
+
+
+B

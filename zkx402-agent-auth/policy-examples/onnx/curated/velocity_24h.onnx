@@ -1,0 +1,27 @@
+pytorch2.8.0:¤
+-
+	spent_24h
+amount/Add_output_0/Add"Add
+L
+/Add_output_0
+	limit_24h/LessOrEqual_output_0/LessOrEqual"LessOrEqual
+9
+/LessOrEqual_output_0approved/Cast"Cast*	
+to 
+main_graphZ
+amount
+
+
+Z
+	spent_24h
+
+
+Z
+	limit_24h
+
+
+b
+approved
+
+
+B
