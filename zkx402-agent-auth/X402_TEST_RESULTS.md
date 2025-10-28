@@ -118,11 +118,11 @@ All x402 endpoints and proof generation infrastructure working:
 | 402 Response | ✅ PASS | Correct status code |
 | Payment Requirements | ✅ PASS | Proper x402 format |
 | Middleware | ✅ PASS | Header parsing works |
-| Dynamic Inputs | ✅ PASS | All models configured |
+| Dynamic Inputs | ✅ PASS | 2-6 inputs per model |
 | JOLT Compilation | ✅ PASS | Fixed - builds successfully |
 | Model Format | ✅ PASS | JOLT-compatible tensors |
-| Proof Generation | ✅ READY | Infrastructure working |
-| Payment Verification | ✅ READY | All endpoints operational |
+| Proof Generation | ⚠️ BLOCKED | JOLT Atlas internal failures |
+| Payment Verification | ⚠️ BLOCKED | Waiting for proof generation |
 
 ## 🎯 Coverage
 
@@ -131,19 +131,43 @@ All x402 endpoints and proof generation infrastructure working:
 - **Endpoint Coverage**: 100% (all planned endpoints implemented)
 - **Documentation**: 100% (X402_INTEGRATION.md complete)
 
+## ⚠️ Known JOLT Atlas Issues (2025-10-28)
+
+### Proof Generation Failures
+
+Testing revealed that **JOLT Atlas has fundamental issues in its proving system**:
+
+1. **simple_threshold.onnx** (our curated model)
+   - Error: `assertion failed` in `read_write_check.rs:1245`
+   - Issue: Read/write-checking sumcheck verification fails
+   - Status: Sumcheck values don't match (left ≠ right)
+
+2. **perceptron.onnx** (JOLT Atlas's own test model)
+   - Error: `assertion failed` in `rebase_scale.rs:194`
+   - Issue: Division/scaling produces incorrect results (computed=[0,0,0] vs expected=[2,2,1])
+   - Status: Even JOLT's built-in test models fail
+
+**Root Cause**: We're using branch `fix-msm-api-compat` from ICME-Lab/zkml-jolt which has ongoing compatibility fixes for the a16z arkworks fork. The proving system has internal assertion failures unrelated to our models or integration work.
+
+**Impact**:
+- ✅ x402 protocol integration is complete
+- ✅ All models are JOLT-compatible format
+- ✅ Infrastructure is ready
+- ❌ JOLT Atlas proving currently non-functional
+
 ## 🔧 Recommended Next Steps
 
-1. **Fix JOLT Prover** (Priority: HIGH)
-   - Update proof_json_output.rs to match current JOLT API
-   - Test proof generation with simple_threshold model
-   - Verify JSON output format
+1. **Monitor JOLT Atlas Development** (Priority: HIGH)
+   - Check for updates to ICME-Lab/zkml-jolt repository
+   - Test with stable branch when available
+   - Consider alternative zkML proving systems (EZKL, ZKML)
 
-2. **Test Full Payment Flow** (Priority: MEDIUM)
-   - Generate test proof for simple_threshold
+2. **Test Full Payment Flow** (Priority: MEDIUM - blocked by JOLT)
+   - Generate test proof for simple_threshold (once JOLT fixed)
    - Encode proof in X-PAYMENT header
    - Verify 200 response with X-PAYMENT-RESPONSE
 
-3. **Integration Testing** (Priority: LOW)
+3. **Integration Testing** (Priority: LOW - blocked by JOLT)
    - Test all 10 models end-to-end
    - Verify proof verification rejects invalid proofs
    - Test error handling
@@ -172,14 +196,16 @@ curl -X POST http://localhost:3001/api/generate-proof \
 
 ## ✨ What's Working
 
-The x402 protocol integration is **feature-complete** and **production-ready** except for the JOLT prover compilation issue:
+The x402 protocol integration is **feature-complete** and **infrastructure-ready**:
 
 - ✅ Full x402 discovery endpoint
 - ✅ Complete 402 payment flow structure
-- ✅ All 10 curated models integrated
-- ✅ Dynamic input handling
+- ✅ All 10 curated models in JOLT-compatible format
+- ✅ Dynamic input handling (2-6 inputs per model)
 - ✅ Proper HTTP status codes
 - ✅ x402-compliant headers and responses
 - ✅ Custom zkml-jolt payment scheme
+- ✅ JOLT prover compiles successfully
+- ✅ proof_json_output supports variable inputs
 
-Once the JOLT prover is fixed, the entire system will be fully operational.
+**Blocked by**: JOLT Atlas proving system has internal assertion failures (see Known Issues above). Once JOLT Atlas is stable, the entire system will be fully operational.
