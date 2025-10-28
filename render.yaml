@@ -35,12 +35,6 @@ services:
       targetMemoryPercent: 80
       targetCPUPercent: 80
 
-    # Disk storage for uploaded models (optional)
-    disk:
-      name: zkx402-models
-      mountPath: /app/policy-examples/onnx
-      sizeGB: 1
-
 # Optional: Environment groups for shared config
 # envVarGroups:
 #   - name: zkx402-config
