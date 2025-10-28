@@ -1,0 +1,13 @@
+[package]
+name = "velocity-auth-guest"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+jolt-sdk = { path = "../../zkml-jolt/jolt-sdk" }
+
+[profile.release]
+opt-level = 3
