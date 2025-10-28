@@ -160,7 +160,7 @@ We've extended JOLT Atlas to support practical authorization use cases for x402 
 - **Comparison Operations**: `Greater`, `Less`, `GreaterEqual` for threshold-based payment authorization
 - **Tensor Operations**: `Slice`, `Identity`, `Reshape` for complex policy data manipulation
 - **MatMult Enhancements**: Extended support for 1D tensor outputs in neural network policies
-- **Increased Tensor Size Limits**: Expanded maximum tensor dimensions to support larger authorization models
+- **Increased Tensor Size Limits**: `MAX_TENSOR_SIZE` increased from 64→1024 to support larger authorization models (e.g., 18 features × 32-bit weights = 576 elements)
 
 **What This Enables for x402**:
 - ✅ **Privacy-Preserving Payment Authorization**: Prove spending limits without revealing balances

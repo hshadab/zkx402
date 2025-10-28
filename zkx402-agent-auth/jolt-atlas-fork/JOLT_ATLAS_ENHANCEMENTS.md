@@ -72,7 +72,8 @@ let (m, n) = if instr.output_dims.len() >= 2 {
 
 ### Maximum Tensor Size
 - **Constant**: `MAX_TENSOR_SIZE` in `onnx-tracer/src/constants.rs`
-- **Default**: 1024 elements per tensor
+- **Enhancement**: Increased from 64→1024 elements per tensor
+- **Rationale**: Support larger authorization models (e.g., 18 features × 32-bit weights = 576 elements for neural network layers)
 - **Implication**: Models must fit within this constraint after padding
 
 ### Supported Tensor Shapes
