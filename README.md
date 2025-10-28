@@ -117,6 +117,83 @@ let proof = generate_proof("simple_auth.onnx", inputs)?;
 println!("Approved: {}", proof.approved);
 ```
 
+## 🎯 Production-Ready Curated Models
+
+We provide **10 production-ready ONNX authorization models** covering the most common x402 payment authorization use cases. These models are fully tested, validated, and ready to use with JOLT Atlas proofs.
+
+### What Are These Models?
+
+Think of these as **pre-built authorization rules that agents can prove they've followed**—without revealing private payment data. For example:
+
+- An AI agent can prove "I checked that the account balance was sufficient" without revealing the actual balance
+- An agent can prove "The vendor trust score met the minimum threshold" without revealing the vendor's identity
+- An agent can prove "Spending velocity was within limits" without revealing transaction history
+
+### How They Work (Plain English)
+
+1. **The Setup**: You choose an authorization model (e.g., "simple_threshold" for basic balance checks)
+2. **The Check**: The agent runs the model with private x402 payment inputs (amount=$50, balance=$100)
+3. **The Proof**: JOLT Atlas generates a zero-knowledge proof showing the model approved the transaction
+4. **The Verification**: Anyone in the x402 ecosystem can verify the proof without seeing the private inputs
+5. **The Result**: Trust without transparency—privacy preserved, authorization verified
+
+### Available Models
+
+| Model | What It Does | When To Use |
+|-------|-------------|-------------|
+| **simple_threshold** | Checks if you have enough money | Basic wallet balance checks in x402 payments |
+| **percentage_limit** | Limits spending to X% of balance | "Don't spend more than 10% at once" policies |
+| **vendor_trust** | Requires minimum vendor reputation | x402 marketplace transactions |
+| **velocity_1h** | Limits spending per hour | Rate limiting, fraud prevention for x402 agents |
+| **velocity_24h** | Limits spending per day | Daily spending caps for x402 payments |
+| **daily_limit** | Hard cap on daily spending | Budget enforcement for agent spending |
+| **age_gate** | Checks minimum age | Age-restricted x402 purchases |
+| **multi_factor** | Combines balance + velocity + trust | High-security x402 transactions |
+| **composite_scoring** | Weighted risk score from multiple factors | Advanced risk assessment for x402 |
+| **risk_neural** | ML-based risk scoring | Sophisticated fraud detection for agent payments |
+
+### Quick Start with Curated Models
+
+```bash
+# 1. Test a model with sample inputs
+cd zkx402-agent-auth/policy-examples/onnx/curated
+python3 test_all_models.py
+
+# 2. Use a specific model for x402 payment authorization
+# Example: Check if $50 transaction is OK with $100 balance
+cd ../../jolt-prover
+./target/release/examples/proof_json_output \
+  ../policy-examples/onnx/curated/simple_threshold.onnx \
+  5000 10000  # $50 and $100 in cents
+```
+
+### Real-World x402 Example
+
+**Scenario**: An AI shopping agent needs to buy office supplies ($75) via x402 but shouldn't reveal the company's bank balance.
+
+**Without zkML**:
+- ❌ Agent reveals balance to vendor: "I have $10,000, so $75 is fine"
+- ❌ Privacy compromised, creates security risk in x402 payment flow
+
+**With zkML (using simple_threshold.onnx)**:
+- ✅ Agent generates proof: "I ran the authorization model and it approved"
+- ✅ Vendor verifies proof in x402 flow: Valid ✓
+- ✅ Balance stays private, authorization confirmed cryptographically
+
+### Model Details
+
+All 10 models are:
+- ✅ **Validated**: Pass comprehensive test suites (29 test cases)
+- ✅ **JOLT-Compatible**: Use only supported operations (Add, Sub, Mul, Div, Greater, Less, Cast, Clip)
+- ✅ **Production-Ready**: Tested with ONNX Runtime and ready for x402 proof generation
+- ✅ **Documented**: Full specifications available
+
+**See detailed documentation**:
+- [README.md](zkx402-agent-auth/policy-examples/onnx/curated/README.md) - Quick start guide
+- [CATALOG.md](zkx402-agent-auth/policy-examples/onnx/curated/CATALOG.md) - Complete model specifications
+- [TEST_RESULTS.md](zkx402-agent-auth/policy-examples/onnx/curated/TEST_RESULTS.md) - Test results and benchmarks
+- [JOLT_ENHANCEMENT_USAGE.md](zkx402-agent-auth/policy-examples/onnx/curated/JOLT_ENHANCEMENT_USAGE.md) - Which enhancements each model uses
+
 ## 📚 Documentation
 
 - **[QUICKSTART.md](QUICKSTART.md)**: Get started in 5 minutes
@@ -165,6 +242,7 @@ We've extended JOLT Atlas to support practical authorization use cases for x402 
 
 **Enhancements Made**:
 - **Comparison Operations**: `Greater`, `Less`, `GreaterEqual` for threshold-based payment authorization
+- **Arithmetic Operations**: `Div` (division) and `Cast` (type conversion) for advanced scoring models
 - **Tensor Operations**: `Slice`, `Identity`, `Reshape` for complex policy data manipulation
 - **MatMult Enhancements**: Extended support for 1D tensor outputs in neural network policies
 - **Increased Tensor Size Limits**: `MAX_TENSOR_SIZE` increased from 64→1024 to support larger authorization models (e.g., 18 features × 32-bit weights = 576 elements)
