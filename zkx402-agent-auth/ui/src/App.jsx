@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import Header from './components/Header'
+import FreeTierBanner from './components/FreeTierBanner'
 import ModelSelector from './components/ModelSelector'
 import AuthorizationSimulator from './components/AuthorizationSimulator'
 import ProofVisualization from './components/ProofVisualization'
@@ -17,6 +18,7 @@ function App() {
       <Header />
 
       <main className="container mx-auto px-4 py-8 max-w-7xl">
+        <FreeTierBanner />
         {/* Tab Navigation */}
         <div className="flex gap-4 mb-8 border-b border-dark-700">
           <button

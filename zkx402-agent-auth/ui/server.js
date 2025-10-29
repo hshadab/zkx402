@@ -1,4 +1,5 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const cors = require('cors');
 const { exec } = require('child_process');
 const path = require('path');
@@ -39,6 +40,33 @@ const upload = multer({
 app.use(cors());
 app.use(express.json());
 app.use(x402Middleware({ baseUrl: BASE_URL }));
+
+// ========== RATE LIMITING ==========
+// Free tier rate limiter for UI proof generation (5 proofs per day)
+const uiProofLimiter = rateLimit({
+  windowMs: 24 * 60 * 60 * 1000, // 24 hours
+  max: 5, // 5 proofs per day per IP
+  message: {
+    error: 'Free tier limit exceeded',
+    message: 'You have used your 5 free proofs for today. Try again tomorrow or integrate via x402 for unlimited access.',
+    resetTime: '24 hours from first request',
+    upgradeOptions: {
+      x402Integration: {
+        description: 'For production use, integrate via x402 protocol for pay-per-use unlimited access',
+        endpoint: `${BASE_URL}/x402/authorize/:modelId`,
+        documentation: 'https://github.com/hshadab/zkx402'
+      },
+      contact: {
+        email: 'Upgrade inquiries: contact via GitHub Issues',
+        github: 'https://github.com/hshadab/zkx402/issues'
+      }
+    }
+  },
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  // Skip rate limit for x402 authenticated requests
+  skip: (req) => req.headers['x-payment'] !== undefined
+});
 
 // ========== x402 DISCOVERY ENDPOINT ==========
 app.get('/.well-known/x402', (req, res) => {
@@ -257,7 +285,7 @@ function generateJoltProof(modelId, inputs) {
   });
 }
 
-app.post('/api/generate-proof', async (req, res) => {
+app.post('/api/generate-proof', uiProofLimiter, async (req, res) => {
   try {
     const { model: modelId, inputs } = req.body;
 
