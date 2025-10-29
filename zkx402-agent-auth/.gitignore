@@ -1,0 +1,36 @@
+# Build artifacts
+target/
+*.log
+*.tmp
+
+# Node modules
+node_modules/
+package-lock.json
+
+# Rust build
+Cargo.lock
+*.rlib
+*.so
+*.dylib
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Removed/redundant directories
+api-server/
+fresh-build/
+jolt-atlas/
+jolt-napi/
+jolt-prover/
+dory-fork/
+zkx402-agent-auth/
+
+# Cargo cache artifacts
+.cargo-home/
