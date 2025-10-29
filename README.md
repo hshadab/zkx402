@@ -119,7 +119,7 @@ println!("Approved: {}", proof.approved);
 
 ## 🎯 Production-Ready Curated Models
 
-We provide **10 production-ready ONNX authorization models** covering the most common x402 payment authorization use cases. These models are fully tested, validated, and ready to use with JOLT Atlas proofs.
+We provide **14 curated ONNX authorization models** (10 production + 4 test) covering the most common x402 payment authorization use cases. These models are fully tested, validated, and ready to use with JOLT Atlas proofs.
 
 ### What Are These Models?
 
@@ -139,6 +139,8 @@ Think of these as **pre-built authorization rules that agents can prove they've 
 
 ### Available Models
 
+#### Production Models (10)
+
 | Model | What It Does | When To Use |
 |-------|-------------|-------------|
 | **simple_threshold** | Checks if you have enough money | Basic wallet balance checks in x402 payments |
@@ -151,6 +153,15 @@ Think of these as **pre-built authorization rules that agents can prove they've 
 | **multi_factor** | Combines balance + velocity + trust | High-security x402 transactions |
 | **composite_scoring** | Weighted risk score from multiple factors | Advanced risk assessment for x402 |
 | **risk_neural** | ML-based risk scoring | Sophisticated fraud detection for agent payments |
+
+#### Test Models (4)
+
+| Model | What It Does | When To Use |
+|-------|-------------|-------------|
+| **test_less** | Tests Less comparison operation | Operation testing, JOLT Atlas validation |
+| **test_identity** | Tests Identity pass-through operation | Graph construction, residual connections |
+| **test_clip** | Tests Clip operation (ReLU approximation) | Activation function testing |
+| **test_slice** | Tests Slice tensor operation | Feature extraction, tensor manipulation |
 
 ### Quick Start with Curated Models
 
@@ -182,15 +193,15 @@ cd ../../jolt-prover
 
 ### Model Details
 
-All 10 models are:
+All 14 models are:
 - ✅ **Validated**: Pass comprehensive test suites (29 test cases)
-- ✅ **JOLT-Compatible**: Use only supported operations (Add, Sub, Mul, Div, Greater, Less, Cast, Clip)
+- ✅ **JOLT-Compatible**: Use only supported operations (Add, Sub, Mul, Div, Greater, Less, Cast, Clip, Identity, Slice)
 - ✅ **Production-Ready**: Tested with ONNX Runtime and ready for x402 proof generation
 - ✅ **Documented**: Full specifications available
 
 **See detailed documentation**:
-- [README.md](zkx402-agent-auth/policy-examples/onnx/curated/README.md) - Quick start guide
-- [CATALOG.md](zkx402-agent-auth/policy-examples/onnx/curated/CATALOG.md) - Complete model specifications
+- [README.md](zkx402-agent-auth/policy-examples/onnx/curated/README.md) - Quick start guide for all 14 curated models
+- [CATALOG.md](zkx402-agent-auth/policy-examples/onnx/curated/CATALOG.md) - Complete specifications for all 14 models (10 production + 4 test)
 - [TEST_RESULTS.md](zkx402-agent-auth/policy-examples/onnx/curated/TEST_RESULTS.md) - Test results and benchmarks
 - [JOLT_ENHANCEMENT_USAGE.md](zkx402-agent-auth/policy-examples/onnx/curated/JOLT_ENHANCEMENT_USAGE.md) - Which enhancements each model uses
 
