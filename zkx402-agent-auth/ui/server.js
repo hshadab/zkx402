@@ -13,6 +13,8 @@ const {
   generatePaymentRequirements
 } = require('./x402-middleware');
 
+const { getPaymentInfo, formatPrice } = require('./base-payment');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
@@ -70,12 +72,14 @@ const uiProofLimiter = rateLimit({
 
 // ========== x402 DISCOVERY ENDPOINT ==========
 app.get('/.well-known/x402', (req, res) => {
+  const paymentInfo = getPaymentInfo();
+
   res.json({
     service: 'zkX402 Agent Authorization - Production Ready ✅',
-    version: '1.1.0',
+    version: '1.2.0',
     status: 'production',
     lastUpdated: '2025-10-29',
-    description: 'Verifiable agent authorization using JOLT Atlas zkML proofs - All 14 models verified',
+    description: 'Verifiable agent authorization using JOLT Atlas zkML proofs with Base USDC payments',
     x402Version: 1,
     verifiedModels: 14,
     modelBreakdown: {
@@ -87,18 +91,30 @@ app.get('/.well-known/x402', (req, res) => {
       'Two-pass input allocation implemented',
       'Constant index Gather addressing corrected'
     ],
+    payment: {
+      enabled: true,
+      blockchain: paymentInfo.network.name,
+      chainId: paymentInfo.network.chainId,
+      token: paymentInfo.token.symbol,
+      tokenAddress: paymentInfo.token.address,
+      paymentWallet: paymentInfo.paymentWallet,
+      explorer: paymentInfo.network.explorer,
+      instructions: paymentInfo.instructions
+    },
     endpoints: {
       models: `${BASE_URL}/x402/models`,
       authorize: `${BASE_URL}/x402/authorize/:modelId`,
       verify: `${BASE_URL}/x402/verify-proof`,
-      generateProof: `${BASE_URL}/api/generate-proof`
+      generateProof: `${BASE_URL}/api/generate-proof`,
+      paymentInfo: `${BASE_URL}/x402/payment-info`
     },
     schemes: [
       {
         scheme: 'zkml-jolt',
-        network: 'jolt-atlas',
-        description: 'Zero-knowledge machine learning proofs using JOLT Atlas',
+        network: 'base-mainnet',
+        description: 'Zero-knowledge machine learning proofs using JOLT Atlas with Base USDC payments',
         proofType: 'onnx-inference',
+        paymentMethod: 'USDC on Base L2',
         operations: 'Gather, Greater, Less, GreaterOrEqual, LessOrEqual, Div, Cast, Slice, Identity, Add, Sub, Mul'
       }
     ],
@@ -108,6 +124,7 @@ app.get('/.well-known/x402', (req, res) => {
       category: CURATED_MODELS[id].category,
       description: CURATED_MODELS[id].description,
       price: CURATED_MODELS[id].price,
+      priceUSDC: formatPrice(CURATED_MODELS[id].price),
       inputs: CURATED_MODELS[id].inputs,
       operations: CURATED_MODELS[id].operations,
       proofTime: CURATED_MODELS[id].proofTime,
@@ -127,6 +144,7 @@ app.get('/x402/models', (req, res) => {
     useCase: model.useCase,
     inputs: model.inputs,
     price: model.price,
+    priceUSDC: formatPrice(model.price),
     operations: model.operations,
     proofTime: model.proofTime,
     file: model.file,
@@ -145,6 +163,11 @@ app.get('/x402/models', (req, res) => {
       test: models.filter(m => m.category === 'Test').length
     }
   });
+});
+
+// ========== x402 PAYMENT INFO ENDPOINT ==========
+app.get('/x402/payment-info', (req, res) => {
+  res.json(getPaymentInfo());
 });
 
 // ========== x402 AUTHORIZATION ENDPOINT ==========
