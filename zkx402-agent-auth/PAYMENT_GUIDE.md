@@ -4,6 +4,12 @@
 
 zkX402 now accepts **real stablecoin payments** on **Base L2** for agent authorization proofs. All x402 protocol requests require payment in USDC to access zkML proof generation services.
 
+## Production API Endpoints
+
+**Production URL**: https://zk-x402.com
+
+All examples below use the production domain. For local development, replace with `http://localhost:3001`.
+
 ## Payment Details
 
 ### Network Information
@@ -54,7 +60,11 @@ All prices are listed in atomic units (1000 units = $0.01 USDC):
 
 1. **Discover Payment Requirements**
    ```bash
-   GET /.well-known/x402
+   # Production
+   curl https://zk-x402.com/.well-known/x402
+
+   # Local development
+   curl http://localhost:3001/.well-known/x402
    ```
    Response includes payment details:
    ```json
@@ -72,7 +82,11 @@ All prices are listed in atomic units (1000 units = $0.01 USDC):
 
 2. **Request Authorization (402 Response)**
    ```bash
-   POST /x402/authorize/simple_threshold
+   # Production
+   curl -X POST https://zk-x402.com/x402/authorize/simple_threshold
+
+   # Local development
+   curl -X POST http://localhost:3001/x402/authorize/simple_threshold
    ```
    Returns HTTP 402 with payment requirements:
    ```json
@@ -107,9 +121,16 @@ All prices are listed in atomic units (1000 units = $0.01 USDC):
 
 5. **Submit Payment + Proof**
    ```bash
-   POST /x402/authorize/simple_threshold
-   Headers:
-     X-PAYMENT: <base64-encoded-payload>
+   # Production
+   curl -X POST https://zk-x402.com/x402/authorize/simple_threshold \
+     -H "Content-Type: application/json" \
+     -H "X-PAYMENT: <base64-encoded-payload>"
+
+   # Local development
+   curl -X POST http://localhost:3001/x402/authorize/simple_threshold \
+     -H "Content-Type: application/json" \
+     -H "X-PAYMENT: <base64-encoded-payload>"
+   ```
 
    Payload structure (before base64 encoding):
    {
@@ -178,7 +199,7 @@ console.log('Payment transaction:', receipt.hash);
 
 ### Free Tier (UI Only)
 - **Limit**: 5 proof generations per day
-- **Access**: Web UI at http://localhost:3001
+- **Access**: Web UI at https://zk-x402.com
 - **Purpose**: Testing and demonstrations
 - **No payment required**: Rate-limited by IP
 
