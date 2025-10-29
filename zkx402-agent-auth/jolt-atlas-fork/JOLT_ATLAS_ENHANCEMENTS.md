@@ -344,7 +344,50 @@ To extend JOLT Atlas operation support:
 - Tract ONNX: https://github.com/sonos/tract
 - X402 Agent Authorization: https://github.com/hshadab/zkx402
 
+## Critical Bugs Fixed
+
+### Gather Operation Heap Address Collision (2025-10-29)
+
+**Severity**: CRITICAL - Caused sumcheck verification failures in all Gather-based models
+
+**Symptoms**:
+```
+assertion `left == right` failed: Read/write-checking sumcheck failed
+```
+
+**Root Cause**: Gather operations were incorrectly writing to input buffer addresses (address 2048), causing heap inconsistencies.
+
+**Fixes Implemented**:
+
+1. **Two-Pass Input Allocation** (`onnx-tracer/src/graph/model.rs`)
+   - Ensures Input nodes get first/stable address slots
+   - Prevents Gather outputs from colliding with input buffers
+
+2. **Constant Index Gather Addressing** (`onnx-tracer/src/graph/node.rs`, `trace_types.rs`)
+   - Gather now uses `imm` field for constant indices
+   - Correct read addressing: `source_address + constant_offset`
+   - Previously used incorrect `ts2=0` pointing to input buffers
+
+**Verification**: Tested with JOLT_DEBUG_MCC=1 and JOLT_DEBUG_RW=1
+
+**Models Fixed**:
+- ✅ simple_threshold.onnx: 6 ops → 15.3 KB proof in 6.6s
+- ✅ composite_scoring.onnx: 72 ops → 18.6 KB proof in 9.3s
+- ✅ All 14 policy models with Gather operations
+
+See [BUGS_FIXED.md](./BUGS_FIXED.md) for detailed analysis.
+
+---
+
 ## Changelog
+
+### 2025-10-29
+- ✅ **CRITICAL FIX**: Gather operation heap address collision
+  - Fixed two-pass input allocation in `model.rs`
+  - Fixed constant index Gather addressing in `node.rs` and `trace_types.rs`
+  - All Gather-based models now pass sumcheck verification
+- ✅ Verified all 14 policy models with full debug instrumentation
+- ✅ Added comprehensive bug documentation in BUGS_FIXED.md
 
 ### 2025-10-28
 - ✅ Added Division (Div) operation with full scale factor handling

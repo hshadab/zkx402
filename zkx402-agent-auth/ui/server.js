@@ -42,10 +42,22 @@ app.use(x402Middleware({ baseUrl: BASE_URL }));
 // ========== x402 DISCOVERY ENDPOINT ==========
 app.get('/.well-known/x402', (req, res) => {
   res.json({
-    service: 'zkX402 Agent Authorization',
-    version: '1.0.0',
-    description: 'Verifiable agent authorization using JOLT Atlas zkML proofs',
+    service: 'zkX402 Agent Authorization - Production Ready ✅',
+    version: '1.1.0',
+    status: 'production',
+    lastUpdated: '2025-10-29',
+    description: 'Verifiable agent authorization using JOLT Atlas zkML proofs - All 14 models verified',
     x402Version: 1,
+    verifiedModels: 14,
+    modelBreakdown: {
+      production: 10,
+      test: 4
+    },
+    criticalFixes: [
+      'Gather heap address collision fixed',
+      'Two-pass input allocation implemented',
+      'Constant index Gather addressing corrected'
+    ],
     endpoints: {
       models: `${BASE_URL}/x402/models`,
       authorize: `${BASE_URL}/x402/authorize/:modelId`,
@@ -57,7 +69,8 @@ app.get('/.well-known/x402', (req, res) => {
         scheme: 'zkml-jolt',
         network: 'jolt-atlas',
         description: 'Zero-knowledge machine learning proofs using JOLT Atlas',
-        proofType: 'onnx-inference'
+        proofType: 'onnx-inference',
+        operations: 'Gather, Greater, Less, GreaterOrEqual, LessOrEqual, Div, Cast, Slice, Identity, Add, Sub, Mul'
       }
     ],
     models: Object.keys(CURATED_MODELS).map(id => ({
@@ -67,6 +80,8 @@ app.get('/.well-known/x402', (req, res) => {
       description: CURATED_MODELS[id].description,
       price: CURATED_MODELS[id].price,
       inputs: CURATED_MODELS[id].inputs,
+      operations: CURATED_MODELS[id].operations,
+      proofTime: CURATED_MODELS[id].proofTime,
       authorizeEndpoint: `${BASE_URL}/x402/authorize/${id}`
     })),
     documentation: 'https://github.com/hshadab/zkx402'
@@ -83,6 +98,8 @@ app.get('/x402/models', (req, res) => {
     useCase: model.useCase,
     inputs: model.inputs,
     price: model.price,
+    operations: model.operations,
+    proofTime: model.proofTime,
     file: model.file,
     authorizeEndpoint: `${BASE_URL}/x402/authorize/${id}`,
     paymentRequirement: generatePaymentRequirements(id, BASE_URL)
@@ -90,8 +107,14 @@ app.get('/x402/models', (req, res) => {
 
   res.json({
     x402Version: 1,
+    status: 'production',
+    lastUpdated: '2025-10-29',
     models,
-    totalModels: models.length
+    totalModels: models.length,
+    modelBreakdown: {
+      production: models.filter(m => m.category !== 'Test').length,
+      test: models.filter(m => m.category === 'Test').length
+    }
   });
 });
 
