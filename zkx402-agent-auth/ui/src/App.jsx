@@ -36,10 +36,10 @@ function App() {
       <main id="simulator" className="container mx-auto px-4 py-8 max-w-7xl">
         <FreeTierBanner />
         {/* Tab Navigation */}
-        <div className="flex gap-4 mb-8 border-b border-dark-700">
+        <div className="flex gap-2 sm:gap-4 mb-8 border-b border-dark-700 overflow-x-auto">
           <button
             onClick={() => setActiveTab('simulator')}
-            className={`px-6 py-3 font-semibold transition-all ${
+            className={`px-4 sm:px-6 py-3 font-semibold transition-all whitespace-nowrap text-sm sm:text-base ${
               activeTab === 'simulator'
                 ? 'text-accent-green border-b-2 border-accent-green'
                 : 'text-gray-400 hover:text-white'
@@ -49,7 +49,7 @@ function App() {
           </button>
           <button
             onClick={() => setActiveTab('api')}
-            className={`px-6 py-3 font-semibold transition-all ${
+            className={`px-4 sm:px-6 py-3 font-semibold transition-all whitespace-nowrap text-sm sm:text-base ${
               activeTab === 'api'
                 ? 'text-accent-green border-b-2 border-accent-green'
                 : 'text-gray-400 hover:text-white'
@@ -127,8 +127,8 @@ function App() {
         )}
       </main>
 
-      <footer className="border-t border-dark-700 mt-16 py-8">
-        <div className="container mx-auto px-4 text-center text-gray-500 text-sm">
+      <footer className="border-t border-dark-700 mt-8 sm:mt-16 py-6 sm:py-8">
+        <div className="container mx-auto px-4 text-center text-gray-500 text-xs sm:text-sm">
           <p>Powered by JOLT Atlas zkML • Built for X402 Agent Authorization</p>
           <p className="mt-2">
             <a href="https://github.com/hshadab/zkx402" className="text-accent-green hover:underline">
