@@ -133,8 +133,8 @@ const CODE_EXAMPLES = {
     name: 'JavaScript (axios)',
     code: `import axios from 'axios';
 
-// Generate proof
-const response = await axios.post('http://localhost:3001/api/generate-proof', {
+// Generate proof (Production)
+const response = await axios.post('https://zk-x402.com/api/generate-proof', {
   model: 'neural_auth',
   inputs: {
     amount: 500,
@@ -147,12 +147,14 @@ const response = await axios.post('http://localhost:3001/api/generate-proof', {
 
 console.log('Approved:', response.data.approved);
 console.log('Proof size:', response.data.proofSize);
-console.log('Verification:', response.data.verification);`
+console.log('Verification:', response.data.verification);
+
+// For local development, use: http://localhost:3001/api/generate-proof`
   },
   curl: {
     name: 'cURL',
-    code: `# Generate proof
-curl -X POST http://localhost:3001/api/generate-proof \\
+    code: `# Generate proof (Production)
+curl -X POST https://zk-x402.com/api/generate-proof \\
   -H "Content-Type: application/json" \\
   -d '{
     "model": "neural_auth",
@@ -166,17 +168,19 @@ curl -X POST http://localhost:3001/api/generate-proof \\
   }'
 
 # List models
-curl http://localhost:3001/api/models
+curl https://zk-x402.com/api/models
 
 # Health check
-curl http://localhost:3001/api/health`
+curl https://zk-x402.com/api/health
+
+# For local development, use: http://localhost:3001/api/...`
   },
   python: {
     name: 'Python (requests)',
     code: `import requests
 
-# Generate proof
-response = requests.post('http://localhost:3001/api/generate-proof', json={
+# Generate proof (Production)
+response = requests.post('https://zk-x402.com/api/generate-proof', json={
     'model': 'neural_auth',
     'inputs': {
         'amount': 500,
@@ -190,7 +194,9 @@ response = requests.post('http://localhost:3001/api/generate-proof', json={
 data = response.json()
 print(f"Approved: {data['approved']}")
 print(f"Proof size: {data['proofSize']}")
-print(f"Verification: {data['verification']}")`
+print(f"Verification: {data['verification']}")
+
+# For local development, use: http://localhost:3001/api/generate-proof`
   }
 }
 
@@ -216,12 +222,12 @@ export default function ApiDocs() {
             for transaction authorization. All responses are in JSON format.
           </p>
           <div className="bg-dark-700 p-4 rounded-lg">
-            <div className="text-sm text-gray-400 mb-2">Base URL (Development)</div>
-            <code className="text-accent-green">http://localhost:3001</code>
+            <div className="text-sm text-gray-400 mb-2">Base URL (Production)</div>
+            <code className="text-accent-green">https://zk-x402.com</code>
           </div>
           <div className="bg-dark-700 p-4 rounded-lg">
-            <div className="text-sm text-gray-400 mb-2">Base URL (Production)</div>
-            <code className="text-accent-green">https://your-app.onrender.com</code>
+            <div className="text-sm text-gray-400 mb-2">Base URL (Local Development)</div>
+            <code className="text-accent-green">http://localhost:3001</code>
           </div>
         </div>
       </div>

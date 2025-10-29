@@ -4,6 +4,12 @@ Complete API documentation for zkX402 Agent Authorization service.
 
 ## Base URL
 
+### Production
+```
+https://zk-x402.com/api
+```
+
+### Local Development
 ```
 http://localhost:3001/api
 ```
@@ -167,7 +173,9 @@ const axios = require('axios');
 
 async function authorizeTransaction(amount, balance, velocity_1h, velocity_24h, vendor_trust) {
   try {
-    const response = await axios.post('http://localhost:3001/api/generate-proof', {
+    // Production: https://zk-x402.com/api/generate-proof
+    // Local: http://localhost:3001/api/generate-proof
+    const response = await axios.post('https://zk-x402.com/api/generate-proof', {
       model: 'simple_auth',
       inputs: {
         amount: amount.toString(),
@@ -202,7 +210,9 @@ authorizeTransaction(50, 1000, 20, 100, 80);
 import requests
 
 def authorize_transaction(amount, balance, velocity_1h, velocity_24h, vendor_trust):
-    response = requests.post('http://localhost:3001/api/generate-proof', json={
+    # Production: https://zk-x402.com/api/generate-proof
+    # Local: http://localhost:3001/api/generate-proof
+    response = requests.post('https://zk-x402.com/api/generate-proof', json={
         'model': 'simple_auth',
         'inputs': {
             'amount': str(amount),
@@ -235,8 +245,8 @@ authorize_transaction(50, 1000, 20, 100, 80)
 ```bash
 #!/bin/bash
 
-# Approved transaction
-curl -X POST http://localhost:3001/api/generate-proof \
+# Approved transaction (Production)
+curl -X POST https://zk-x402.com/api/generate-proof \
   -H "Content-Type: application/json" \
   -d '{
     "model": "simple_auth",
@@ -250,7 +260,7 @@ curl -X POST http://localhost:3001/api/generate-proof \
   }' | jq '.approved'
 
 # Rejected transaction (excessive amount)
-curl -X POST http://localhost:3001/api/generate-proof \
+curl -X POST https://zk-x402.com/api/generate-proof \
   -H "Content-Type: application/json" \
   -d '{
     "model": "simple_auth",
@@ -262,6 +272,8 @@ curl -X POST http://localhost:3001/api/generate-proof \
       "vendor_trust": "80"
     }
   }' | jq '.approved'
+
+# For local development, use: http://localhost:3001/api/generate-proof
 ```
 
 ## Rate Limiting

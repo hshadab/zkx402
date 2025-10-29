@@ -62,13 +62,13 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000 in your browser.
+Open http://localhost:3000 in your browser (or https://zk-x402.com for production).
 
 ## Quick Test
 
 ### Via Web UI
 
-1. Open http://localhost:3000
+1. Open https://zk-x402.com (or http://localhost:3000 for local development)
 2. Select "Simple Auth" model
 3. Use default values:
    - Amount: 50 ($0.50)
@@ -82,7 +82,8 @@ Open http://localhost:3000 in your browser.
 ### Via API
 
 ```bash
-curl -X POST http://localhost:3001/api/generate-proof \
+# Production
+curl -X POST https://zk-x402.com/api/generate-proof \
   -H "Content-Type: application/json" \
   -d '{
     "model": "simple_auth",
@@ -94,6 +95,8 @@ curl -X POST http://localhost:3001/api/generate-proof \
       "vendor_trust": "80"
     }
   }'
+
+# Local development: http://localhost:3001/api/generate-proof
 ```
 
 Response:

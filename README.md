@@ -76,10 +76,10 @@ All 14 curated models have transparent, pay-per-proof pricing:
 
 ```bash
 # 1. Discover payment requirements
-curl http://localhost:3001/.well-known/x402
+curl https://zk-x402.com/.well-known/x402
 
 # 2. Request authorization (receive 402 Payment Required)
-curl -X POST http://localhost:3001/x402/authorize/simple_threshold
+curl -X POST https://zk-x402.com/x402/authorize/simple_threshold
 
 # 3. Send USDC payment on Base (using ethers.js or web3.js)
 # Transaction to: 0x1f409E94684804e5158561090Ced8941B47B0CC6
@@ -87,11 +87,13 @@ curl -X POST http://localhost:3001/x402/authorize/simple_threshold
 # 4. Generate zkML proof locally
 
 # 5. Submit payment + proof via X-PAYMENT header
-curl -X POST http://localhost:3001/x402/authorize/simple_threshold \
+curl -X POST https://zk-x402.com/x402/authorize/simple_threshold \
   -H "X-PAYMENT: <base64-encoded-payment-and-proof>"
 
 # 6. Receive authorization result with X-PAYMENT-RESPONSE header
 ```
+
+**For local development**: Replace `https://zk-x402.com` with `http://localhost:3001`
 
 **Complete integration guide**: [PAYMENT_GUIDE.md](zkx402-agent-auth/PAYMENT_GUIDE.md)
 
@@ -125,13 +127,13 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000 in your browser.
+Open http://localhost:3000 in your browser (or https://zk-x402.com for production).
 
 ### 5-Minute Demo
 
 **1. Generate a Proof (Web UI)**
 
-Navigate to http://localhost:3000, select "Simple Auth" model, and click "Generate Proof" with default inputs:
+Navigate to https://zk-x402.com (or http://localhost:3000 for local), select "Simple Auth" model, and click "Generate Proof" with default inputs:
 - Amount: 50 ($0.50)
 - Balance: 1000 ($10.00)
 - Vendor Trust: 80 (0.80)
@@ -141,7 +143,8 @@ Result: **✅ APPROVED** in ~0.7 seconds
 **2. Generate a Proof (API)**
 
 ```bash
-curl -X POST http://localhost:3001/api/generate-proof \
+# Production
+curl -X POST https://zk-x402.com/api/generate-proof \
   -H "Content-Type: application/json" \
   -d '{
     "model": "simple_auth",
@@ -153,6 +156,9 @@ curl -X POST http://localhost:3001/api/generate-proof \
       "vendor_trust": "80"
     }
   }'
+
+# Local development
+# curl -X POST http://localhost:3001/api/generate-proof ...
 ```
 
 **3. Generate a Proof (Rust)**
@@ -374,10 +380,12 @@ Upload and manage custom x402 authorization models:
 ```bash
 # Via UI: Drag & drop .onnx files for custom x402 payment policies
 
-# Via API:
-curl -X POST http://localhost:3001/api/upload-model \
+# Via API (Production):
+curl -X POST https://zk-x402.com/api/upload-model \
   -F "model=@my_x402_policy.onnx" \
   -F "description=Custom x402 payment authorization policy"
+
+# Local development: http://localhost:3001/api/upload-model
 ```
 
 ## 📊 Performance
@@ -539,7 +547,9 @@ const axios = require('axios');
  * @returns {Object} Verifiable proof of authorization for x402 payment
  */
 async function authorizeX402Payment(amount, balance, trust) {
-  const response = await axios.post('http://localhost:4000/api/v1/proof', {
+  // Production: https://zk-x402.com/api/generate-proof
+  // Local: http://localhost:3001/api/generate-proof
+  const response = await axios.post('https://zk-x402.com/api/generate-proof', {
     model: 'simple_auth',
     inputs: {
       amount: amount.toString(),
@@ -582,7 +592,9 @@ def authorize_x402_payment(amount, balance, trust):
     Returns:
         dict: Verifiable proof of authorization for x402 payment
     """
-    response = requests.post('http://localhost:4000/api/v1/proof', json={
+    # Production: https://zk-x402.com/api/generate-proof
+    # Local: http://localhost:3001/api/generate-proof
+    response = requests.post('https://zk-x402.com/api/generate-proof', json={
         'model': 'simple_auth',
         'inputs': {
             'amount': str(amount),
