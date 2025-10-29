@@ -387,13 +387,18 @@ function generateJoltProof(modelId, inputs) {
           return reject(new Error(result.message || result.error));
         }
 
+        // Derive approval status from output value
+        // For authorization models: output=1 means approved, output=0 means denied
+        const isApproved = result.output === 1;
+
         console.log(`[JOLT] Proof generated for ${modelId}:`, {
-          approved: result.approved,
+          output: result.output,
+          approved: isApproved,
           proving_time: result.proving_time
         });
 
         resolve({
-          approved: result.approved,
+          approved: isApproved,
           output: result.output,
           verification: result.verification,
           proofSize: result.proof_size,
