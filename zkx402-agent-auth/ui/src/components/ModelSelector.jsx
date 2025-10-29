@@ -44,9 +44,9 @@ export default function ModelSelector({ selectedModel, onModelChange }) {
 
       {/* Selected Model Info */}
       {selected && (
-        <div className="mb-6 p-4 rounded-lg bg-gradient-to-r from-accent-blue/10 to-accent-purple/10 border border-accent-blue/30">
-          <div className="flex items-start justify-between">
-            <div>
+        <div className="mb-6 p-4 sm:p-6 rounded-lg bg-gradient-to-r from-accent-blue/10 to-accent-purple/10 border border-accent-blue/30">
+          <div className="flex flex-col sm:flex-row items-start justify-between gap-3">
+            <div className="flex-1">
               <h3 className="font-semibold text-lg text-accent-blue mb-1">
                 {selected.name}
               </h3>
@@ -60,27 +60,28 @@ export default function ModelSelector({ selectedModel, onModelChange }) {
                 selected.category === 'Basic' ? 'bg-accent-green/20 text-accent-green' :
                 selected.category === 'Velocity' ? 'bg-accent-blue/20 text-accent-blue' :
                 selected.category === 'Access' ? 'bg-accent-purple/20 text-accent-purple' :
-                'bg-accent-orange/20 text-accent-orange'
+                selected.category === 'Advanced' ? 'bg-accent-orange/20 text-accent-orange' :
+                'bg-gray-600/20 text-gray-400'
               }`}>
                 {selected.category}
               </span>
             </div>
           </div>
-          <div className="flex gap-4 mt-3 text-xs text-gray-500">
+          <div className="flex flex-wrap gap-3 sm:gap-4 mt-3 text-xs text-gray-500">
             <span className="flex items-center gap-1">
               <svg className="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
               {selected.operations}
             </span>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <span className="flex items-center gap-1">
               <svg className="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
               {selected.proofTime}
             </span>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <span className="flex items-center gap-1">
               <svg className="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
@@ -88,6 +89,70 @@ export default function ModelSelector({ selectedModel, onModelChange }) {
               {selected.inputs.length} inputs
             </span>
           </div>
+
+          {/* Example Scenarios */}
+          {selected.examples && selected.examples.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-accent-blue/20">
+              <h4 className="text-xs font-semibold text-gray-300 mb-3 flex items-center gap-2">
+                <svg className="w-4 h-4 text-accent-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                How it works - Example scenarios:
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {selected.examples.map((example, idx) => (
+                  <div
+                    key={idx}
+                    className={`p-3 rounded-lg border text-xs ${
+                      example.expected === 'approved' || example.expected === 'true'
+                        ? 'bg-accent-green/5 border-accent-green/30'
+                        : 'bg-red-500/5 border-red-500/30'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      {example.expected === 'approved' || example.expected === 'true' ? (
+                        <svg className="w-4 h-4 text-accent-green flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      )}
+                      <span className={`font-semibold ${
+                        example.expected === 'approved' || example.expected === 'true'
+                          ? 'text-accent-green'
+                          : 'text-red-400'
+                      }`}>
+                        {example.desc}
+                      </span>
+                    </div>
+                    <div className="pl-6 space-y-1 text-gray-400">
+                      {Object.entries(example).map(([key, value]) => {
+                        if (key === 'expected' || key === 'desc') return null
+                        return (
+                          <div key={key} className="flex justify-between">
+                            <span className="opacity-70">{key}:</span>
+                            <span className="font-mono">{value}</span>
+                          </div>
+                        )
+                      })}
+                      <div className="flex justify-between pt-1 border-t border-gray-700/50 mt-1">
+                        <span className="opacity-70">Result:</span>
+                        <span className={`font-semibold ${
+                          example.expected === 'approved' || example.expected === 'true'
+                            ? 'text-accent-green'
+                            : 'text-red-400'
+                        }`}>
+                          {example.expected}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
