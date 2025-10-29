@@ -16,7 +16,7 @@ export default function ModelSelector({ selectedModel, onModelChange }) {
   return (
     <div className="card">
       <div className="card-header">
-        <h2 className="text-xl font-bold">Select Authorization Model</h2>
+        <h2 className="text-xl font-bold">Select Agent Model to Verify</h2>
         <p className="text-sm text-gray-400 mt-1">
           Choose from 14 production-ready models for x402 agent payment authorization
         </p>
@@ -34,7 +34,7 @@ export default function ModelSelector({ selectedModel, onModelChange }) {
                 : 'bg-dark-700 text-gray-400 hover:bg-dark-600'
             }`}
           >
-            {cat === 'All' ? '📋 All Models' : `${MODEL_CATEGORIES[cat]?.icon || ''} ${cat}`}
+            {cat === 'All' ? 'All Models' : cat}
             <span className="ml-2 text-xs opacity-70">
               ({cat === 'All' ? CURATED_MODELS.length : CURATED_MODELS.filter(m => m.category === cat).length})
             </span>
@@ -67,11 +67,26 @@ export default function ModelSelector({ selectedModel, onModelChange }) {
             </div>
           </div>
           <div className="flex gap-4 mt-3 text-xs text-gray-500">
-            <span>📝 {selected.operations}</span>
+            <span className="flex items-center gap-1">
+              <svg className="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              {selected.operations}
+            </span>
             <span>•</span>
-            <span>⚡ {selected.proofTime}</span>
+            <span className="flex items-center gap-1">
+              <svg className="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              {selected.proofTime}
+            </span>
             <span>•</span>
-            <span>🔢 {selected.inputs.length} inputs</span>
+            <span className="flex items-center gap-1">
+              <svg className="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+              </svg>
+              {selected.inputs.length} inputs
+            </span>
           </div>
         </div>
       )}
@@ -100,7 +115,9 @@ export default function ModelSelector({ selectedModel, onModelChange }) {
                 }`}>
                   {model.name}
                 </h3>
-                <span className="text-lg">{categoryInfo?.icon || '📊'}</span>
+                <svg className="w-5 h-5 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
               </div>
 
               <p className="text-sm text-gray-400 mb-3 line-clamp-2">{model.description}</p>
@@ -140,7 +157,7 @@ export default function ModelSelector({ selectedModel, onModelChange }) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {Object.entries(MODEL_CATEGORIES).map(([name, info]) => (
             <div key={name} className="flex items-center gap-2">
-              <span className="text-lg">{info.icon}</span>
+              <div className="w-2 h-2 rounded-full bg-current opacity-40"></div>
               <div>
                 <div className="text-sm font-medium text-white">{name}</div>
                 <div className="text-xs text-gray-500">{info.description}</div>

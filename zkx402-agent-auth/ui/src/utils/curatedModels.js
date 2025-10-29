@@ -478,11 +478,11 @@ export const INPUT_CONFIGS = {
  * Model categories for organization
  */
 export const MODEL_CATEGORIES = {
-  Basic: { color: 'accent-green', icon: '⚡', description: 'Simple threshold checks' },
-  Velocity: { color: 'accent-blue', icon: '🚦', description: 'Rate limiting and spending caps' },
-  Access: { color: 'accent-purple', icon: '🔒', description: 'Access control policies' },
-  Advanced: { color: 'accent-orange', icon: '🛡️', description: 'Multi-factor and ML-based' },
-  Test: { color: 'accent-gray', icon: '🧪', description: 'Operation verification tests' }
+  Basic: { color: 'accent-green', description: 'Simple threshold checks' },
+  Velocity: { color: 'accent-blue', description: 'Rate limiting and spending caps' },
+  Access: { color: 'accent-purple', description: 'Access control policies' },
+  Advanced: { color: 'accent-orange', description: 'Multi-factor and ML-based' },
+  Test: { color: 'accent-gray', description: 'Operation verification tests' }
 }
 
 /**

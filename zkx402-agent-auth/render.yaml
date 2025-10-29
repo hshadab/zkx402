@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: zkx402-agent-auth
+    env: node
+    region: oregon
+    plan: standard
+    buildCommand: cd ui && bash render-build.sh
+    startCommand: cd ui && npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 18
+      - key: PORT
+        value: 10000
+      - key: NODE_ENV
+        value: production
+    healthCheckPath: /health
+    autoDeploy: true

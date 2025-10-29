@@ -8,6 +8,8 @@
     "server": "nodemon server.js",
     "client": "vite",
     "build": "vite build",
+    "build:jolt": "cd ../jolt-atlas-fork/zkml-jolt-core && cargo build --release --example proof_json_output",
+    "start": "node server.js",
     "preview": "vite preview",
     "test": "jest",
     "test:watch": "jest --watch",

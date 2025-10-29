@@ -52,7 +52,6 @@ function App() {
               />
             </section>
 
-            {/* Authorization Simulator */}
             <section className="mb-8">
               <AuthorizationSimulator
                 modelType={selectedModel}

@@ -62,7 +62,7 @@ export default function AuthorizationSimulator({ modelType, onProofGenerated, is
   if (!model) {
     return (
       <div className="card">
-        <h2 className="card-header">Authorization Simulator</h2>
+        <h2 className="card-header">Agent zkML Generator</h2>
         <div className="text-center py-12 text-gray-500">
           <p>Please select a model to begin</p>
         </div>
@@ -75,7 +75,7 @@ export default function AuthorizationSimulator({ modelType, onProofGenerated, is
       <div className="card-header">
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="text-xl font-bold">Authorization Simulator</h2>
+            <h2 className="text-xl font-bold">Agent zkML Generator</h2>
             <p className="text-sm text-gray-400 mt-1">
               Test {model.name} with custom inputs
             </p>

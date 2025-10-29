@@ -17,12 +17,7 @@ export default function Header() {
 
             {/* Service Info */}
             <div className="border-l border-dark-600 pl-6 flex items-center">
-              <div className="flex items-center gap-2">
-                <h1 className="text-3xl font-bold text-white">zk-x402</h1>
-                <span className="px-2 py-1 text-xs font-semibold bg-accent-green/20 text-accent-green rounded">
-                  x402 Infrastructure
-                </span>
-              </div>
+              <h1 className="text-3xl font-bold text-white">zk-x402</h1>
             </div>
           </div>
 
