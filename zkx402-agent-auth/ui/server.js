@@ -491,6 +491,32 @@ app.get('/health', (req, res) => {
   });
 });
 
+// ========== SERVE REACT UI (PRODUCTION) ==========
+// Serve static files from Vite build output
+const distPath = path.join(__dirname, 'dist');
+if (fs.existsSync(distPath)) {
+  console.log('[UI] Serving React UI from dist directory');
+  app.use(express.static(distPath));
+
+  // Serve index.html for all other routes (SPA fallback)
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+} else {
+  console.log('[UI] No dist directory found - UI not built yet. Run "npm run build" to build the UI.');
+  app.get('*', (req, res) => {
+    res.status(503).json({
+      error: 'UI not available',
+      message: 'React UI has not been built. Run "npm run build" to build the UI.',
+      api: {
+        health: '/health',
+        discovery: '/.well-known/x402',
+        models: '/x402/models'
+      }
+    });
+  });
+}
+
 // ========== START SERVER ==========
 app.listen(PORT, () => {
   console.log(`
