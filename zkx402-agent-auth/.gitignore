@@ -1,5 +1,7 @@
 # Build artifacts
 target/
+# Exception: Allow pre-built JOLT Atlas binary for faster Render builds
+!jolt-atlas-fork/target/release/examples/proof_json_output
 *.log
 *.tmp
 

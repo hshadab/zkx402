@@ -37,44 +37,57 @@ npm run build
 
 # Build JOLT Atlas zkML prover binary
 BINARY_PATH="../jolt-atlas-fork/target/release/examples/proof_json_output"
+BINARY_DIR="../jolt-atlas-fork/target/release/examples"
 
 # Check if binary already exists (from previous build or committed)
 if [ -f "$BINARY_PATH" ]; then
     echo "✅ JOLT Atlas binary already exists!"
     echo "📦 Binary size: $(ls -lh "$BINARY_PATH" | awk '{print $5}')"
     echo "🕐 Last modified: $(stat -c %y "$BINARY_PATH" 2>/dev/null || stat -f %Sm "$BINARY_PATH" 2>/dev/null)"
-
-    # Check if we should rebuild (if Rust source files changed)
-    # This is optional - you can force rebuild by deleting the binary
     echo "⏭️  Skipping compilation (binary exists). To force rebuild, delete the binary first."
 else
-    echo "🔨 Building JOLT Atlas zkML prover..."
-    echo "Changing to JOLT directory..."
-    cd ../jolt-atlas-fork/zkml-jolt-core || {
-        echo "❌ ERROR: Cannot find jolt-atlas-fork directory!"
-        echo "Looking for directories..."
-        ls -la ../
-        exit 1
-    }
+    echo "🔍 Binary not found, attempting to download from GitHub Releases..."
 
-    # Build the proof_json_output example
-    echo "Compiling proof_json_output binary (this may take 10-15 minutes)..."
-    echo "⏰ Started at: $(date)"
-    cargo build --release --example proof_json_output
-    echo "✅ Finished at: $(date)"
+    # Create directory for binary
+    mkdir -p "$BINARY_DIR"
 
-    # Verify binary was created
-    if [ -f "../../jolt-atlas-fork/target/release/examples/proof_json_output" ]; then
-        echo "✅ JOLT Atlas binary built successfully!"
-        ls -lh "../../jolt-atlas-fork/target/release/examples/proof_json_output"
+    # Try to download pre-built binary from GitHub Releases
+    RELEASE_URL="https://github.com/hshadab/zkx402/releases/download/jolt-binary-v1/proof_json_output"
+
+    if curl -L -f -o "$BINARY_PATH" "$RELEASE_URL" 2>/dev/null; then
+        chmod +x "$BINARY_PATH"
+        echo "✅ Downloaded pre-built binary from GitHub Releases!"
+        echo "📦 Binary size: $(ls -lh "$BINARY_PATH" | awk '{print $5}')"
     else
-        echo "❌ ERROR: JOLT Atlas binary not found!"
-        echo "Checking target directory..."
-        ls -la ../../jolt-atlas-fork/target/release/ || echo "Target directory not found"
-        exit 1
-    fi
+        echo "⚠️  Download failed or release not found, building from source..."
+        echo "🔨 Building JOLT Atlas zkML prover..."
+        echo "Changing to JOLT directory..."
+        cd ../jolt-atlas-fork/zkml-jolt-core || {
+            echo "❌ ERROR: Cannot find jolt-atlas-fork directory!"
+            echo "Looking for directories..."
+            ls -la ../
+            exit 1
+        }
 
-    cd ../../ui
+        # Build the proof_json_output example
+        echo "Compiling proof_json_output binary (this may take 10-15 minutes)..."
+        echo "⏰ Started at: $(date)"
+        cargo build --release --example proof_json_output
+        echo "✅ Finished at: $(date)"
+
+        # Verify binary was created
+        if [ -f "../../jolt-atlas-fork/target/release/examples/proof_json_output" ]; then
+            echo "✅ JOLT Atlas binary built successfully!"
+            ls -lh "../../jolt-atlas-fork/target/release/examples/proof_json_output"
+        else
+            echo "❌ ERROR: JOLT Atlas binary not found!"
+            echo "Checking target directory..."
+            ls -la ../../jolt-atlas-fork/target/release/ || echo "Target directory not found"
+            exit 1
+        fi
+
+        cd ../../ui
+    fi
 fi
 
 echo "========================================="
