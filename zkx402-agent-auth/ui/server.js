@@ -102,11 +102,16 @@ app.get('/.well-known/x402', (req, res) => {
       instructions: paymentInfo.instructions
     },
     endpoints: {
+      discovery: `${BASE_URL}/.well-known/x402`,
       models: `${BASE_URL}/x402/models`,
       authorize: `${BASE_URL}/x402/authorize/:modelId`,
-      verify: `${BASE_URL}/x402/verify-proof`,
+      verifyProof: `${BASE_URL}/x402/verify-proof`,
       generateProof: `${BASE_URL}/api/generate-proof`,
-      paymentInfo: `${BASE_URL}/x402/payment-info`
+      paymentInfo: `${BASE_URL}/x402/payment-info`,
+      facilitator: {
+        supported: `${BASE_URL}/x402/supported`,
+        verify: `${BASE_URL}/x402/verify`
+      }
     },
     schemes: [
       {
@@ -168,6 +173,105 @@ app.get('/x402/models', (req, res) => {
 // ========== x402 PAYMENT INFO ENDPOINT ==========
 app.get('/x402/payment-info', (req, res) => {
   res.json(getPaymentInfo());
+});
+
+// ========== x402 FACILITATOR ENDPOINTS ==========
+
+// GET /x402/supported - List supported (scheme, network) pairs
+app.get('/x402/supported', (req, res) => {
+  res.json({
+    x402Version: 1,
+    supported: [
+      {
+        scheme: 'zkml-jolt',
+        network: 'base-mainnet',
+        description: 'Zero-knowledge ML proofs with Base USDC payments',
+        features: [
+          'On-chain payment verification',
+          'JOLT Atlas zkML proof validation',
+          'Direct settlement (no facilitator needed)'
+        ],
+        paymentToken: {
+          symbol: 'USDC',
+          address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+          decimals: 6,
+          network: 'Base Mainnet',
+          chainId: 8453
+        }
+      }
+    ]
+  });
+});
+
+// POST /x402/verify - Verify payment payload without settling
+app.post('/x402/verify', async (req, res) => {
+  try {
+    const { paymentHeader, paymentRequirements } = req.body;
+
+    if (!paymentHeader) {
+      return res.status(400).json({
+        isValid: false,
+        invalidReason: 'Missing paymentHeader'
+      });
+    }
+
+    if (!paymentRequirements) {
+      return res.status(400).json({
+        isValid: false,
+        invalidReason: 'Missing paymentRequirements'
+      });
+    }
+
+    // Parse payment header
+    const paymentData = parsePaymentHeader(paymentHeader);
+    if (!paymentData) {
+      return res.status(400).json({
+        isValid: false,
+        invalidReason: 'Invalid payment header format'
+      });
+    }
+
+    // Extract model ID from payment requirements
+    const modelId = paymentRequirements.extra?.modelId || paymentRequirements.resource?.split('/').pop();
+    if (!modelId) {
+      return res.status(400).json({
+        isValid: false,
+        invalidReason: 'Cannot determine model ID from payment requirements'
+      });
+    }
+
+    // Verify the payment
+    const { verifyZkmlProof } = require('./x402-middleware');
+    const verification = await verifyZkmlProof(paymentData, modelId);
+
+    if (!verification.isValid) {
+      return res.json({
+        isValid: false,
+        invalidReason: verification.invalidReason,
+        paymentDetails: verification.paymentDetails
+      });
+    }
+
+    // Payment verified successfully
+    res.json({
+      isValid: true,
+      invalidReason: null,
+      details: {
+        modelId,
+        approved: verification.approved,
+        paymentVerified: true,
+        proofVerified: true,
+        paymentDetails: verification.paymentDetails
+      }
+    });
+
+  } catch (error) {
+    console.error('[x402/verify] Error:', error);
+    res.status(500).json({
+      isValid: false,
+      invalidReason: `Verification error: ${error.message}`
+    });
+  }
 });
 
 // ========== x402 AUTHORIZATION ENDPOINT ==========
@@ -405,6 +509,8 @@ x402 Endpoints:
   GET  /x402/models             - List authorization models
   POST /x402/authorize/:modelId - Authorize with proof (402 flow)
   POST /x402/verify-proof       - Verify zkML proof
+  GET  /x402/supported          - Supported schemes/networks
+  POST /x402/verify             - Verify payment payload
 
 Standard Endpoints:
   POST /api/generate-proof      - Generate zkML proof
@@ -412,5 +518,6 @@ Standard Endpoints:
   GET  /health                  - Health check
 
 Documentation: https://github.com/hshadab/zkx402
+Payment Guide: https://github.com/hshadab/zkx402/blob/main/zkx402-agent-auth/PAYMENT_GUIDE.md
   `);
 });

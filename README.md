@@ -30,15 +30,70 @@ zkX402 brings **verifiable authorization to the x402 payment protocol**, enablin
 ## ✨ Features
 
 - ✅ **ONNX Inference Proofs**: Zero-knowledge proofs of correct ML model execution (~0.7s generation)
-- ✅ **x402 Integration Ready**: Designed for seamless integration with x402 payment protocol
+- ✅ **x402 Protocol Integration**: Full HTTP 402 payment flow with Base USDC payments
+- ✅ **Base L2 Payments**: Real stablecoin payments on Base mainnet with on-chain verification
 - ✅ **Rule-Based Policies**: Threshold checks, comparisons, velocity limits for payment authorization
 - ✅ **Neural Network Policies**: ML-based risk scoring and classification for x402 transactions
-- ✅ **Web UI**: Interactive proof generation and model comparison
-- ✅ **REST API**: Production-ready external API with rate limiting for x402 service integration
+- ✅ **Web UI**: Interactive proof generation with free tier (5 proofs/day) and model comparison
+- ✅ **REST API**: Production-ready external API with rate limiting and payment verification
 - ✅ **Model Registry**: Upload and manage custom ONNX authorization models
 - ✅ **Proof History**: Persistent history with export functionality
 - ✅ **Batch Processing**: Generate multiple proofs in parallel for high-throughput x402 systems
 - ✅ **Comprehensive Tests**: Full E2E test coverage (Jest + Rust)
+
+## 💳 Payment System
+
+zkX402 accepts **real USDC stablecoin payments on Base L2** for production x402 agent authorization proofs.
+
+### Payment Details
+
+- **Network**: Base Mainnet (Chain ID: 8453)
+- **Token**: USDC at `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`
+- **Payment Wallet**: `0x1f409E94684804e5158561090Ced8941B47B0CC6`
+- **Explorer**: [View on BaseScan](https://basescan.org/address/0x1f409E94684804e5158561090Ced8941B47B0CC6)
+
+### Pricing
+
+All 14 curated models have transparent, pay-per-proof pricing:
+
+| Model Tier | Price Range | Use Cases |
+|------------|-------------|-----------|
+| **Test Models** | $0.005 | Operation verification, testing |
+| **Basic Auth** | $0.01 - $0.015 | Simple threshold checks, vendor trust |
+| **Velocity Control** | $0.02 | Hourly/daily spending limits |
+| **Advanced** | $0.04 - $0.06 | Multi-factor auth, neural risk scoring |
+
+**See complete pricing**: [PAYMENT_GUIDE.md](zkx402-agent-auth/PAYMENT_GUIDE.md)
+
+### Free Tier vs Paid Tier
+
+| Tier | Access | Limit | Use Case |
+|------|--------|-------|----------|
+| **Free** | Web UI | 5 proofs/day | Testing, demonstrations |
+| **Paid** | x402 API | Unlimited | Production AI agents |
+
+### Payment Flow for x402 Agents
+
+```bash
+# 1. Discover payment requirements
+curl http://localhost:3001/.well-known/x402
+
+# 2. Request authorization (receive 402 Payment Required)
+curl -X POST http://localhost:3001/x402/authorize/simple_threshold
+
+# 3. Send USDC payment on Base (using ethers.js or web3.js)
+# Transaction to: 0x1f409E94684804e5158561090Ced8941B47B0CC6
+
+# 4. Generate zkML proof locally
+
+# 5. Submit payment + proof via X-PAYMENT header
+curl -X POST http://localhost:3001/x402/authorize/simple_threshold \
+  -H "X-PAYMENT: <base64-encoded-payment-and-proof>"
+
+# 6. Receive authorization result with X-PAYMENT-RESPONSE header
+```
+
+**Complete integration guide**: [PAYMENT_GUIDE.md](zkx402-agent-auth/PAYMENT_GUIDE.md)
 
 ## 🎯 Quick Start
 
