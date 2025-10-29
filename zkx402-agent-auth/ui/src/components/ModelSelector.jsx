@@ -18,7 +18,7 @@ export default function ModelSelector({ selectedModel, onModelChange }) {
       <div className="card-header">
         <h2 className="text-xl font-bold">Select Authorization Model</h2>
         <p className="text-sm text-gray-400 mt-1">
-          Choose from 10 production-ready models for x402 payment authorization
+          Choose from 14 production-ready models for x402 agent payment authorization
         </p>
       </div>
 

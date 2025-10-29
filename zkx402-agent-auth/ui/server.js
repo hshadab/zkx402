@@ -18,7 +18,8 @@ const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 
 // Paths
 const MODELS_DIR = path.join(__dirname, '../policy-examples/onnx');
-const JOLT_PROVER_DIR = path.join(__dirname, '../jolt-prover');
+const JOLT_PROVER_DIR = path.join(__dirname, '../jolt-atlas-fork');  // Use fixed jolt-atlas-fork
+const JOLT_BINARY = path.join(__dirname, '../jolt-atlas-fork/target/release/examples/proof_json_output');
 
 // Multer config
 const storage = multer.diskStorage({
@@ -207,9 +208,13 @@ function generateJoltProof(modelId, inputs) {
       return value;
     }).join(' ');
 
-    const cargoCmd = `cd ${JOLT_PROVER_DIR} && cargo run --release --example proof_json_output "${modelPath}" ${inputArgs}`;
+    // Use pre-built binary if it exists, otherwise cargo run
+    const usePrebuiltBinary = fs.existsSync(JOLT_BINARY);
+    const cargoCmd = usePrebuiltBinary
+      ? `${JOLT_BINARY} "${modelPath}" ${inputArgs}`
+      : `cd ${JOLT_PROVER_DIR}/zkml-jolt-core && cargo run --release --example proof_json_output "${modelPath}" ${inputArgs}`;
 
-    console.log(`[JOLT] Generating proof for ${modelId}: ${cargoCmd}`);
+    console.log(`[JOLT Atlas] Generating proof for ${modelId}: ${cargoCmd}`);
 
     exec(cargoCmd, { maxBuffer: 1024 * 1024 * 10 }, (error, stdout, stderr) => {
       if (error) {

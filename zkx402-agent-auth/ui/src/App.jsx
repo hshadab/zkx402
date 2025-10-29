@@ -27,7 +27,7 @@ function App() {
                 : 'text-gray-400 hover:text-white'
             }`}
           >
-            Authorization Simulator
+            Verify Agent Models
           </button>
           <button
             onClick={() => setActiveTab('api')}
