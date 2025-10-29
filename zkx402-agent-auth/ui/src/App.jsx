@@ -13,6 +13,22 @@ function App() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [activeTab, setActiveTab] = useState('simulator') // 'simulator' or 'api'
 
+  // Handle hash-based navigation for View API button
+  React.useEffect(() => {
+    const handleHashChange = () => {
+      if (window.location.hash === '#api') {
+        setActiveTab('api')
+      }
+    }
+
+    // Check on mount
+    handleHashChange()
+
+    // Listen for hash changes
+    window.addEventListener('hashchange', handleHashChange)
+    return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [])
+
   return (
     <div className="min-h-screen bg-dark-900">
       <Header />
@@ -105,7 +121,9 @@ function App() {
 
         {/* API Docs Tab */}
         {activeTab === 'api' && (
-          <ApiDocs />
+          <div id="api">
+            <ApiDocs />
+          </div>
         )}
       </main>
 

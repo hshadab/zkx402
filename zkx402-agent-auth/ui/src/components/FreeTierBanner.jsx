@@ -10,7 +10,7 @@ export default function FreeTierBanner() {
           </div>
           <div>
             <h3 className="text-lg font-semibold text-white mb-1">
-              Free Demo Access
+              Free Test Access
             </h3>
             <p className="text-sm text-gray-400">
               5 proof generations per day • No signup required
