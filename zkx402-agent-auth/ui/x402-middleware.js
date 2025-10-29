@@ -46,7 +46,9 @@ const CURATED_MODELS = {
     category: 'Basic',
     inputs: ['vendor_trust', 'min_trust'],
     price: '1000',
-    useCase: 'Marketplace vendor verification'
+    useCase: 'Marketplace vendor verification',
+    operations: 5,
+    proofTime: '~5s'
   },
   velocity_1h: {
     file: 'curated/velocity_1h.onnx',
@@ -55,7 +57,9 @@ const CURATED_MODELS = {
     category: 'Velocity',
     inputs: ['amount', 'spent_1h', 'limit_1h'],
     price: '2000',
-    useCase: 'Hourly rate limiting'
+    useCase: 'Hourly rate limiting',
+    operations: 8,
+    proofTime: '6.4s'
   },
   velocity_24h: {
     file: 'curated/velocity_24h.onnx',
@@ -64,7 +68,9 @@ const CURATED_MODELS = {
     category: 'Velocity',
     inputs: ['amount', 'spent_24h', 'limit_24h'],
     price: '2000',
-    useCase: 'Daily spending caps'
+    useCase: 'Daily spending caps',
+    operations: 8,
+    proofTime: '6.2s'
   },
   daily_limit: {
     file: 'curated/daily_limit.onnx',
@@ -73,7 +79,9 @@ const CURATED_MODELS = {
     category: 'Velocity',
     inputs: ['amount', 'daily_spent', 'daily_cap'],
     price: '2000',
-    useCase: 'Budget enforcement'
+    useCase: 'Budget enforcement',
+    operations: 8,
+    proofTime: '8.4s'
   },
   age_gate: {
     file: 'curated/age_gate.onnx',
@@ -82,7 +90,9 @@ const CURATED_MODELS = {
     category: 'Access',
     inputs: ['age', 'min_age'],
     price: '1000',
-    useCase: 'Age-restricted purchases'
+    useCase: 'Age-restricted purchases',
+    operations: 5,
+    proofTime: '~5s'
   },
   multi_factor: {
     file: 'curated/multi_factor.onnx',
