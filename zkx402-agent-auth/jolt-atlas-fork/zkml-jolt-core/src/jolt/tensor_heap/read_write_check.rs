@@ -1242,18 +1242,42 @@ impl<F: JoltField, ProofTranscript: Transcript> ReadWriteCheckingProof<F, ProofT
         // eq(r, r_address)
         let eq_eval_address = EqPolynomial::mle(&r, &r_address);
 
-        assert_eq!(
-            eq_eval_address
-                * eq_eval_cycle
-                * self.rd_wa_claim
-                * (self.rd_wv_claim - self.val_claim)
-                + z * eq_eval_cycle * self.ts1_ra_claim * self.val_claim
-                + z.square() * eq_eval_cycle * self.ts2_ra_claim * self.val_claim
-                + z_cubed * eq_eval_cycle * self.gather_ra_claim * self.val_claim
-                + z_fourth * eq_eval_cycle * self.ts3_ra_claim * self.val_claim,
-            sumcheck_claim,
-            "Read/write-checking sumcheck failed"
-        );
+        let write_term = eq_eval_address
+            * eq_eval_cycle
+            * self.rd_wa_claim
+            * (self.rd_wv_claim - self.val_claim);
+        let ts1_term = z * eq_eval_cycle * self.ts1_ra_claim * self.val_claim;
+        let ts2_term = z.square() * eq_eval_cycle * self.ts2_ra_claim * self.val_claim;
+        let gather_term = z_cubed * eq_eval_cycle * self.gather_ra_claim * self.val_claim;
+        let ts3_term = z_fourth * eq_eval_cycle * self.ts3_ra_claim * self.val_claim;
+        let lhs = write_term + ts1_term + ts2_term + gather_term + ts3_term;
+
+        if lhs != sumcheck_claim && std::env::var("JOLT_DEBUG_RW").is_ok() {
+            eprintln!("[RW-DEBUG] Sumcheck mismatch");
+            eprintln!("[RW-DEBUG] z                = {:?}", z);
+            eprintln!("[RW-DEBUG] eq_addr         = {:?}", eq_eval_address);
+            eprintln!("[RW-DEBUG] eq_cycle        = {:?}", eq_eval_cycle);
+            eprintln!("[RW-DEBUG] rd_wa_claim     = {:?}", self.rd_wa_claim);
+            eprintln!("[RW-DEBUG] rd_wv_claim     = {:?}", self.rd_wv_claim);
+            eprintln!("[RW-DEBUG] val_claim       = {:?}", self.val_claim);
+            eprintln!("[RW-DEBUG] ts1_ra_claim    = {:?}", self.ts1_ra_claim);
+            eprintln!("[RW-DEBUG] ts1_rv_claim    = {:?}", self.ts1_rv_claim);
+            eprintln!("[RW-DEBUG] ts2_ra_claim    = {:?}", self.ts2_ra_claim);
+            eprintln!("[RW-DEBUG] ts2_rv_claim    = {:?}", self.ts2_rv_claim);
+            eprintln!("[RW-DEBUG] ts3_ra_claim    = {:?}", self.ts3_ra_claim);
+            eprintln!("[RW-DEBUG] ts3_rv_claim    = {:?}", self.ts3_rv_claim);
+            eprintln!("[RW-DEBUG] gather_ra_claim = {:?}", self.gather_ra_claim);
+            eprintln!("[RW-DEBUG] gather_rv_claim = {:?}", self.gather_rv_claim);
+            eprintln!("[RW-DEBUG] write_term      = {:?}", write_term);
+            eprintln!("[RW-DEBUG] ts1_term        = {:?}", ts1_term);
+            eprintln!("[RW-DEBUG] ts2_term        = {:?}", ts2_term);
+            eprintln!("[RW-DEBUG] gather_term     = {:?}", gather_term);
+            eprintln!("[RW-DEBUG] ts3_term        = {:?}", ts3_term);
+            eprintln!("[RW-DEBUG] lhs             = {:?}", lhs);
+            eprintln!("[RW-DEBUG] rhs (claim)     = {:?}", sumcheck_claim);
+        }
+
+        assert_eq!(lhs, sumcheck_claim, "Read/write-checking sumcheck failed");
 
         (r_address, r_cycle)
     }

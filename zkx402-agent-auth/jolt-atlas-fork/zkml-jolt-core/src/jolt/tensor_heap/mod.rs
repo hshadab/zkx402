@@ -63,6 +63,8 @@ impl<F: JoltField, ProofTranscript: Transcript> TensorHeapTwistProof<F, ProofTra
     ) -> TensorHeapTwistProof<F, ProofTranscript> {
         #[cfg(test)]
         sanity_check_mcc(trace);
+        // Optional debug check of heap consistency, enabled with JOLT_DEBUG_MCC=1
+        crate::jolt::execution_trace::sanity_check_mcc_debug(trace);
         let log_T = (trace.len() * MAX_TENSOR_SIZE).log_2();
 
         let r: Vec<F> = transcript.challenge_vector(K.log_2());

@@ -216,6 +216,8 @@ impl Model {
                             &mut max_lookup_inputs,
                             &mut min_lookup_inputs,
                         )?;
+                        // Capture first intermediate tensor for proof generation
+                        self.tracer.capture_intermediate(res.intermediate_lookups.first().cloned());
                     }
                     debug!(
                         "------------ output node int {}: {} \n  ------------ scale: {}",
@@ -586,7 +588,36 @@ impl Model {
         // This creates a mismatch between the node's indexes in the `graph` and in the `nodes` BTreeMap
         // This counter allows us to keep track of the mapping between a node position in `graph` and its position in `nodes`.
         let mut remappings = BTreeMap::<usize, usize>::new();
+        // Pass 1: insert all Input ("Source") nodes first to reserve heap slots for inputs
         for (i, n) in graph.nodes.iter().enumerate() {
+            if n.op().name() == "Source" {
+                let mut node = Node::new(n.clone(), &mut nodes, scales, symbol_values, &remappings);
+
+                if node.opkind.requires_shape_equality() {
+                    node.homogenize_input_shapes(&mut nodes);
+                }
+
+                if let Some(ref scales) = override_input_scales {
+                    if let Some(inp) = node.opkind.get_input() {
+                        let scale = scales[input_idx];
+                        node.opkind = SupportedOp::Input(Input {
+                            scale,
+                            datum_type: inp.datum_type,
+                        });
+                        input_idx += 1;
+                        node.out_scale = scale;
+                    }
+                }
+                remappings.insert(i, node.idx);
+                nodes.insert(node.idx, NodeType::Node(node));
+            }
+        }
+
+        // Pass 2: insert all remaining nodes
+        for (i, n) in graph.nodes.iter().enumerate() {
+            if n.op().name() == "Source" {
+                continue;
+            }
             // Extract the slope layer hyperparams
             match n.op().downcast_ref::<Scan>() {
                 Some(b) => {

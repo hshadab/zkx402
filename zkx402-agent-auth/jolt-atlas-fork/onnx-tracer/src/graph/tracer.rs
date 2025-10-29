@@ -100,6 +100,27 @@ impl Tracer {
         };
     }
 
+    /// (Intermediate) Records intermediate tensor values from Hybrid operations.
+    ///
+    /// This method should be called after the instruction has been executed,
+    /// to log intermediate computation tensors (e.g., mask_inter from Greater/Less).
+    /// It updates the last entry in the execution trace with the intermediate tensor.
+    ///
+    /// # Arguments
+    /// - `intermediate`: The first intermediate tensor from intermediate_lookups.
+    ///
+    /// # Panics
+    /// Panics if `execution_trace` is already mutably borrowed elsewhere,
+    /// which would indicate a bug in concurrent trace recording.
+    pub fn capture_intermediate(&self, intermediate: Option<Tensor<i32>>) {
+        if let Some(tensor) = intermediate {
+            let mut execution_trace = self.execution_trace.borrow_mut();
+            if let Some(row) = execution_trace.last_mut() {
+                row.advice_value = Some(tensor);
+            }
+        }
+    }
+
     /// Clears the execution trace, resetting it to an empty state.
     /// This method is useful for reinitializing the tracer before a new execution run.
     pub fn clear(&self) {

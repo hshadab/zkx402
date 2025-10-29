@@ -35,8 +35,8 @@ use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::jolt::instruction::{
-    add::ADD, beq::BEQInstruction, ge::GEInstruction, mul::MUL, output::OUTPUT, sub::SUB,
-    virtual_assert_valid_div0::AssertValidDiv0Instruction,
+    add::ADD, beq::BEQInstruction, ge::GEInstruction, le::LEInstruction, mul::MUL,
+    output::OUTPUT, sub::SUB, virtual_assert_valid_div0::AssertValidDiv0Instruction,
     virtual_assert_valid_signed_remainder::AssertValidSignedRemainderInstruction,
     virtual_move::MOVEInstruction,
 };
@@ -102,6 +102,12 @@ impl JoltONNXCycle {
         } else {
             vec![0; MAX_TENSOR_SIZE]
         }
+    }
+
+    pub fn advice_vals(&self) -> Vec<u64> {
+        self.advice_value
+            .clone()
+            .unwrap_or_else(|| vec![0; MAX_TENSOR_SIZE])
     }
 
     pub fn no_op() -> Self {
@@ -1132,6 +1138,7 @@ define_lookup_enum!(
     Sub: SUB<WORD_SIZE>,
     Mul: MUL<WORD_SIZE>,
     Ge: GEInstruction<WORD_SIZE>,
+    Le: LEInstruction<WORD_SIZE>,
     Advice: ADVICEInstruction<WORD_SIZE>,
     VirtualAssertValidSignedRemainder: AssertValidSignedRemainderInstruction<WORD_SIZE>,
     VirtualAssertValidDiv0: AssertValidDiv0Instruction<WORD_SIZE>,
@@ -1163,6 +1170,24 @@ impl JoltONNXCycle {
             ONNXOpcode::Sub => Some(
                 (0..MAX_TENSOR_SIZE)
                     .map(|i| ElementWiseLookup::Sub(SUB(ts1[i], ts2[i])))
+                    .collect(),
+            ),
+            // x <= y
+            ONNXOpcode::Le => Some(
+                (0..MAX_TENSOR_SIZE)
+                    .map(|i| ElementWiseLookup::Ge(GEInstruction(ts2[i], ts1[i])))
+                    .collect(),
+            ),
+            // x < y
+            ONNXOpcode::Less => Some(
+                (0..MAX_TENSOR_SIZE)
+                    .map(|i| ElementWiseLookup::Le(LEInstruction(ts1[i], ts2[i])))
+                    .collect(),
+            ),
+            // x > y  <=>  y < x
+            ONNXOpcode::Greater => Some(
+                (0..MAX_TENSOR_SIZE)
+                    .map(|i| ElementWiseLookup::Le(LEInstruction(ts2[i], ts1[i])))
                     .collect(),
             ),
             ONNXOpcode::VirtualAdvice => {
@@ -1338,6 +1363,7 @@ impl JoltONNXCycle {
                 ElementWiseLookup::Sub(_) => "Sub",
                 ElementWiseLookup::Mul(_) => "Mul",
                 ElementWiseLookup::Ge(_) => "Ge",
+                ElementWiseLookup::Le(_) => "Le",
                 ElementWiseLookup::Advice(_) => "Advice",
                 ElementWiseLookup::VirtualAssertValidSignedRemainder(_) => {
                     "VirtualAssertValidSignedRemainder"
@@ -1469,6 +1495,79 @@ pub fn sanity_check_mcc(execution_trace: &[JoltONNXCycle]) {
             assert_eq!(
                 tensor_heap[*addr], *pre_val,
                 "TD WRITE error at cycle_{i}: {cycle:#?}; Expected pre-state: {}, got: {} at address {addr} ",
+                *pre_val as u32 as i32, tensor_heap[*addr] as u32 as i32
+            );
+            tensor_heap[*addr] = *post_val;
+        }
+    }
+}
+
+// Debug-only heap consistency check (enabled via JOLT_DEBUG_MCC env var).
+// Mirrors the test-only sanity_check_mcc, but compiled for normal builds when invoked explicitly.
+pub fn sanity_check_mcc_debug(execution_trace: &[JoltONNXCycle]) {
+    if std::env::var("JOLT_DEBUG_MCC").is_err() {
+        return;
+    }
+    let tensor_heap_addresses: Vec<usize> = execution_trace
+        .iter()
+        .map(|cycle| cycle.td_write().0.last().unwrap() + 1)
+        .collect();
+    let tensor_heap_K = tensor_heap_addresses
+        .iter()
+        .max()
+        .unwrap()
+        .next_power_of_two();
+    let mut tensor_heap = vec![0u64; tensor_heap_K];
+    for (i, cycle) in execution_trace.iter().enumerate() {
+        // ts1 read
+        let (ts1_read_addresses, ts1_read_values) = cycle.ts1_read();
+        for (addr, value) in itertools::izip!(ts1_read_addresses.iter(), ts1_read_values.iter()) {
+            assert_eq!(
+                tensor_heap[*addr], *value,
+                "[MCC-DEBUG] TS1 READ error at cycle_{i}: {cycle:#?}; Expected: {}, got: {} at address {addr}",
+                tensor_heap[*addr] as u32 as i32, *value as u32 as i32
+            );
+        }
+        // ts2 read
+        let (ts2_read_addresses, ts2_read_values) = cycle.ts2_read();
+        for (addr, value) in itertools::izip!(ts2_read_addresses.iter(), ts2_read_values.iter()) {
+            assert_eq!(
+                tensor_heap[*addr], *value,
+                "[MCC-DEBUG] TS2 READ error at cycle_{i}: {cycle:#?}; Expected: {}, got: {} at address {addr}",
+                tensor_heap[*addr] as u32 as i32, *value as u32 as i32
+            );
+        }
+        // ts3 read
+        let (ts3_read_addresses, ts3_read_values) = cycle.ts3_read();
+        for (addr, value) in itertools::izip!(ts3_read_addresses.iter(), ts3_read_values.iter()) {
+            assert_eq!(
+                tensor_heap[*addr], *value,
+                "[MCC-DEBUG] TS3 READ error at cycle_{i}: {cycle:#?}; Expected: {}, got: {} at address {addr}",
+                tensor_heap[*addr] as u32 as i32, *value as u32 as i32
+            );
+        }
+        // gather reads
+        let (gather_read_addresses, gather_read_values) =
+            (cycle.gather_addresses(), cycle.gather_read_values());
+        for (addr, value) in
+            itertools::izip!(gather_read_addresses.iter(), gather_read_values.iter())
+        {
+            assert_eq!(
+                tensor_heap[*addr], *value,
+                "[MCC-DEBUG] GATHER READ error at cycle_{i}: {cycle:#?}; Expected: {}, got: {} at address {addr}",
+                tensor_heap[*addr] as u32 as i32, *value as u32 as i32
+            );
+        }
+        // writes
+        let (td_write_addresses, td_pre_values, td_write_values) = cycle.td_write();
+        for (addr, pre_val, post_val) in itertools::izip!(
+            td_write_addresses.iter(),
+            td_pre_values.iter(),
+            td_write_values.iter()
+        ) {
+            assert_eq!(
+                tensor_heap[*addr], *pre_val,
+                "[MCC-DEBUG] TD WRITE error at cycle_{i}: {cycle:#?}; Expected pre-state: {}, got: {} at address {addr}",
                 *pre_val as u32 as i32, tensor_heap[*addr] as u32 as i32
             );
             tensor_heap[*addr] = *post_val;

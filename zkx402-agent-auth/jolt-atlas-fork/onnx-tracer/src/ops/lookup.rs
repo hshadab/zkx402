@@ -59,6 +59,7 @@ impl From<&LookupOp> for ONNXOpcode {
             LookupOp::ReLU => ONNXOpcode::Relu,
             LookupOp::Sigmoid { .. } => ONNXOpcode::Sigmoid,
             LookupOp::Rsqrt { .. } => ONNXOpcode::Sqrt,
+            LookupOp::Recip { .. } => ONNXOpcode::Recip,
             LookupOp::Div { .. } => ONNXOpcode::Div,
             LookupOp::Cast { .. } => ONNXOpcode::Identity,
             LookupOp::Softmax { .. } => ONNXOpcode::Softmax,

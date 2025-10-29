@@ -560,6 +560,15 @@ impl Node {
             SupportedOp::Nonlinear(LookupOp::Div { denom }) => {
                 Some(Tensor::from((0..MAX_TENSOR_SIZE).map(|_| denom.0 as i32)))
             }
+            // Provide immediate indices for Gather with constant_idx so downstream
+            // address computation can derive gather read addresses correctly.
+            SupportedOp::Hybrid(HybridOp::Gather {
+                constant_idx: Some(idx),
+                ..
+            }) => {
+                let idx_i32 = idx.map(|x| x as i32);
+                Some(idx_i32)
+            }
             _ => None,
         }
     }

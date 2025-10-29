@@ -177,9 +177,33 @@ impl ONNXCycle {
     ///
     /// Panics if any underlying tensor's length exceeds `MAX_TENSOR_SIZE`.
     pub fn to_memory_ops(&self) -> ONNXCycleMemoryOps {
-        let ts1 = (get_tensor_zkvm_addresses(self.ts1()), self.ts1_vals());
-        let ts2 = (get_tensor_zkvm_addresses(self.ts2()), self.ts2_vals());
-        let ts3 = (get_tensor_zkvm_addresses(self.ts3()), self.ts3_vals());
+        // Build reads with address masking beyond the actual tensor length
+        let mut ts1_addrs = get_tensor_zkvm_addresses(self.ts1());
+        let mut ts2_addrs = get_tensor_zkvm_addresses(self.ts2());
+        let mut ts3_addrs = get_tensor_zkvm_addresses(self.ts3());
+
+        let ts1_vals = self.ts1_vals();
+        let ts2_vals = self.ts2_vals();
+        let ts3_vals = self.ts3_vals();
+
+        let ts1_len = self.ts1_val_raw().map(|t| t.inner.len()).unwrap_or(0);
+        let ts2_len = self.ts2_val_raw().map(|t| t.inner.len()).unwrap_or(0);
+        let ts3_len = self.ts3_val_raw().map(|t| t.inner.len()).unwrap_or(0);
+
+        // Zero out addresses for padded elements to avoid spurious RA mass
+        for i in ts1_len..MAX_TENSOR_SIZE {
+            ts1_addrs[i] = 0;
+        }
+        for i in ts2_len..MAX_TENSOR_SIZE {
+            ts2_addrs[i] = 0;
+        }
+        for i in ts3_len..MAX_TENSOR_SIZE {
+            ts3_addrs[i] = 0;
+        }
+
+        let ts1 = (ts1_addrs, ts1_vals);
+        let ts2 = (ts2_addrs, ts2_vals);
+        let ts3 = (ts3_addrs, ts3_vals);
 
         // If the instruction is Output, we write to reserved addresses for output tensor
         let td_addresses = if self.instr.opcode == ONNXOpcode::Output {
@@ -187,17 +211,29 @@ impl ONNXCycle {
         } else {
             get_tensor_zkvm_addresses(self.td())
         };
+        // Keep write addresses contiguous for heap sizing and consistency
         let td = (td_addresses, self.td_pre_vals(), self.td_post_vals());
 
         let gather_addresses = {
             if let ONNXOpcode::Gather = self.instr.opcode {
                 let mut address = vec![0usize; MAX_TENSOR_SIZE];
+                // Prefer imm (constant indices) if provided; otherwise use ts2 values
+                let indices: Vec<usize> = if let Some(imm) = self.instr.imm.clone() {
+                    imm.inner
+                        .iter()
+                        .map(|&v| (v as u64 as usize))
+                        .collect()
+                } else {
+                    self.ts2_vals().iter().map(|&v| v as usize).collect()
+                };
                 for (i, addr) in address
                     .iter_mut()
                     .enumerate()
                     .take(self.instr.active_output_elements)
                 {
-                    *addr = ts1.0[ts2.1[i] as usize];
+                    let idx = indices.get(i).cloned().unwrap_or(0);
+                    let idx = idx.min(MAX_TENSOR_SIZE - 1);
+                    *addr = ts1.0[idx];
                 }
                 address
             } else {
@@ -409,6 +445,9 @@ impl ONNXInstr {
             | ONNXOpcode::VirtualAssertValidDiv0
             | ONNXOpcode::VirtualAssertEq
             | ONNXOpcode::Gte
+            | ONNXOpcode::Le
+            | ONNXOpcode::Less
+            | ONNXOpcode::Greater
             | ONNXOpcode::Sum
             | ONNXOpcode::Relu
             | ONNXOpcode::Output
@@ -424,6 +463,9 @@ impl ONNXInstr {
             | ONNXOpcode::VirtualAssertValidDiv0
             | ONNXOpcode::VirtualAssertEq
             | ONNXOpcode::Gte
+            | ONNXOpcode::Le
+            | ONNXOpcode::Less
+            | ONNXOpcode::Greater
         );
 
         flags[CircuitFlags::RightOperandIsImm as usize] = matches!(
@@ -459,6 +501,9 @@ impl ONNXInstr {
             | ONNXOpcode::VirtualMove
             | ONNXOpcode::VirtualConst
             | ONNXOpcode::Gte
+            | ONNXOpcode::Le
+            | ONNXOpcode::Less
+            | ONNXOpcode::Greater
             | ONNXOpcode::Sum
             | ONNXOpcode::Relu
             | ONNXOpcode::Output
@@ -638,6 +683,7 @@ pub enum ONNXOpcode {
     Broadcast,
     Abs,
     Slice,
+    Recip,
 
     // Virtual instructions
     VirtualAdvice,
@@ -697,6 +743,7 @@ impl ONNXOpcode {
             ONNXOpcode::ReduceMin => 1u64 << 33,
             ONNXOpcode::Abs => 1u64 << 34,
             ONNXOpcode::Slice => 1u64 << 35,
+            ONNXOpcode::Recip => 1u64 << 39,
             _ => panic!("ONNXOpcode {self:#?} not implemented in into_bitflag"),
         }
     }

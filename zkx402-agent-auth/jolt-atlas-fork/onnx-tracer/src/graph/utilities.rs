@@ -865,6 +865,34 @@ pub fn new_op_from_onnx(
                 )));
             }
         }
+        // Support right-shift as division by 2^k when k is constant
+        "ShiftRight" => {
+            if inputs.len() != 2 {
+                return Err(Box::new(GraphError::InvalidDims(
+                    idx,
+                    "shift right".to_string(),
+                )));
+            }
+            if let Some(c) = inputs[1].opkind().get_mutable_constant() {
+                inputs[1].decrement_use();
+                deleted_indices.push(inputs.len() - 1);
+                if c.raw_values.len() != 1 {
+                    return Err(Box::new(GraphError::InvalidDims(
+                        idx,
+                        "shift right expects scalar shift".to_string(),
+                    )));
+                }
+                let k = c.raw_values[0].round() as i32;
+                let denom = 1i32.checked_shl(k as u32).ok_or_else(|| {
+                    GraphError::MissingParams("shift amount too large".to_string())
+                })?;
+                SupportedOp::Nonlinear(LookupOp::Div {
+                    denom: crate::ops::utils::F32(denom as f32),
+                })
+            } else {
+                return Err(Box::new(GraphError::NonConstantDiv));
+            }
+        }
         "EinSum" => {
             // Extract the slope layer hyperparams
             let op: &EinSum = match node.op().downcast_ref::<EinSum>() {
@@ -1377,6 +1405,33 @@ dimensions"
                 SupportedOp::Hybrid(HybridOp::Less)
             } else {
                 panic!("Expected 2 inputs for <, got {}", inputs.len())
+            }
+        }
+        "<=" => {
+            // Extract the slope layer hyperparams
+            if inputs.len() == 2 {
+                SupportedOp::Hybrid(HybridOp::LessEqual)
+            } else {
+                panic!("Expected 2 inputs for <=, got {}", inputs.len())
+            }
+        }
+        "ShiftRight" => {
+            if inputs.len() != 2 {
+                panic!("Expected 2 inputs for ShiftRight, got {}", inputs.len());
+            }
+            if let Some(c) = inputs[1].opkind().get_mutable_constant() {
+                inputs[1].decrement_use();
+                deleted_indices.push(inputs.len() - 1);
+                if c.raw_values.len() != 1 {
+                    panic!("ShiftRight expects scalar shift amount");
+                }
+                let k = c.raw_values[0].round() as i32;
+                let denom = 1i32.checked_shl(k as u32).expect("shift amount too large");
+                SupportedOp::Nonlinear(LookupOp::Div {
+                    denom: crate::ops::utils::F32(denom as f32),
+                })
+            } else {
+                panic!("ShiftRight expects constant shift amount");
             }
         }
         c => {

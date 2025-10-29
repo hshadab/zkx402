@@ -80,6 +80,7 @@ impl From<&HybridOp> for ONNXOpcode {
             HybridOp::GreaterEqual => ONNXOpcode::Gte,
             HybridOp::Greater => ONNXOpcode::Greater,
             HybridOp::Less => ONNXOpcode::Less,
+            HybridOp::LessEqual => ONNXOpcode::Le,
             HybridOp::ReduceArgMax { .. } => ONNXOpcode::ArgMax,
             _ => {
                 panic!("HybridOp {value:?} cannot be converted to ONNXOpcode",);
