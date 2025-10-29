@@ -9,6 +9,12 @@ echo "========================================="
 echo "Current directory: $(pwd)"
 echo "Contents: $(ls -la)"
 
+# Initialize zkml-jolt-fork submodule (required for jolt-atlas-fork)
+echo "Initializing zkml-jolt-fork submodule..."
+cd ../..
+git submodule update --init --recursive zkx402-agent-auth/zkml-jolt-fork
+cd zkx402-agent-auth/ui
+
 # Install Rust if not already installed
 if ! command -v rustc &> /dev/null; then
     echo "Installing Rust..."
