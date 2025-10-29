@@ -35,33 +35,14 @@ npm install
 echo "Building Vite frontend..."
 npm run build
 
-# Build JOLT Atlas zkML prover binary
-echo "Building JOLT Atlas zkML prover..."
-echo "Changing to JOLT directory..."
-cd ../jolt-atlas-fork/zkml-jolt-core || {
-    echo "❌ ERROR: Cannot find jolt-atlas-fork directory!"
-    echo "Looking for directories..."
-    ls -la ../
-    exit 1
-}
-
-# Build the proof_json_output example
-echo "Compiling proof_json_output binary (this may take 10-15 minutes)..."
-cargo build --release --example proof_json_output
-
-# Verify binary was created
-BINARY_PATH="../../jolt-atlas-fork/target/release/examples/proof_json_output"
-if [ -f "$BINARY_PATH" ]; then
-    echo "✅ JOLT Atlas binary built successfully!"
-    ls -lh "$BINARY_PATH"
-else
-    echo "❌ ERROR: JOLT Atlas binary not found at $BINARY_PATH!"
-    echo "Checking target directory..."
-    ls -la ../../jolt-atlas-fork/target/release/ || echo "Target directory not found"
-    exit 1
-fi
-
-cd ../../ui
+# NOTE: JOLT Atlas prover build is currently disabled due to upstream dependency issues
+# See zkx402-agent-auth/archived/X402_TEST_RESULTS.md for details
+# The ICME-Lab/zkml-jolt dependency has arkworks compatibility issues that prevent compilation
+#
+# Skipping prover build - UI will deploy with proof generation unavailable
+echo "⚠️  Skipping JOLT Atlas prover build (upstream dependency issues)"
+echo "    See archived/X402_TEST_RESULTS.md for details"
+echo "    UI will deploy with model showcase functionality"
 
 echo "========================================="
 echo "Build complete!"
