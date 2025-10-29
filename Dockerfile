@@ -17,13 +17,12 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /build
 
 # Copy Rust prover code
-COPY zkx402-agent-auth/jolt-prover ./jolt-prover
 COPY zkx402-agent-auth/zkml-jolt-fork ./zkml-jolt-fork
 COPY zkx402-agent-auth/jolt-atlas-fork ./jolt-atlas-fork
 COPY zkx402-agent-auth/policy-examples ./policy-examples
 
 # Build the JOLT prover (release mode for performance)
-WORKDIR /build/jolt-prover
+WORKDIR /build/jolt-atlas-fork/zkml-jolt-core
 RUN cargo build --release --example proof_json_output
 
 # =============================================================================
@@ -55,7 +54,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copy built Rust prover from Stage 1
-COPY --from=rust-builder /build/jolt-prover/target/release/examples/proof_json_output /app/jolt-prover/target/release/examples/proof_json_output
+COPY --from=rust-builder /build/jolt-atlas-fork/target/release/examples/proof_json_output /app/jolt-atlas-fork/target/release/examples/proof_json_output
 COPY --from=rust-builder /build/policy-examples /app/policy-examples
 
 # Copy Node.js backend and built frontend from Stage 2

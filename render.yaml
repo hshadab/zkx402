@@ -23,7 +23,7 @@ services:
       - key: MODELS_DIR
         value: /app/policy-examples/onnx
       - key: JOLT_PROVER_DIR
-        value: /app/jolt-prover
+        value: /app/jolt-atlas-fork
 
     # Health check endpoint
     healthCheckPath: /api/health
