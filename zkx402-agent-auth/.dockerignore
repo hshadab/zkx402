@@ -1,0 +1,4 @@
+# Ignore all Dockerfiles - use native Node.js runtime
+**/Dockerfile
+**/.devcontainer
+**/Dockerfile.*
