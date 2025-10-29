@@ -8,7 +8,9 @@ node_modules/
 package-lock.json
 
 # Rust build
-Cargo.lock
+# Note: Cargo.lock is NOT ignored for jolt-atlas-fork because it's a binary/executable
+# For binaries, Cargo.lock should be committed to ensure reproducible builds
+# See: https://doc.rust-lang.org/cargo/faq.html#why-do-binaries-have-cargolock-in-version-control-but-not-libraries
 *.rlib
 *.so
 *.dylib
