@@ -9,11 +9,18 @@ export default function Header() {
           <div className="flex items-center justify-between">
             {/* Logo and Brand */}
             <div className="flex items-center gap-4">
-              <img
-                src="https://cdn.prod.website-files.com/65d52b07d5bc41614daa723f/665df12739c532f45b665fe7_logo-novanet.svg"
-                alt="NovaNet"
-                className="h-7 w-auto opacity-90 hover:opacity-100 transition-opacity"
-              />
+              <a
+                href="https://www.novanet.xyz/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center"
+              >
+                <img
+                  src="https://cdn.prod.website-files.com/65d52b07d5bc41614daa723f/665df12739c532f45b665fe7_logo-novanet.svg"
+                  alt="NovaNet"
+                  className="h-7 w-auto opacity-90 hover:opacity-100 transition-opacity"
+                />
+              </a>
               <div className="h-6 w-px bg-dark-600"></div>
               <span className="text-xl font-bold bg-gradient-to-r from-accent-green to-accent-blue bg-clip-text text-transparent">
                 zkx402
@@ -27,6 +34,14 @@ export default function Header() {
                 className="text-sm text-gray-400 hover:text-white transition-colors"
               >
                 Features
+              </a>
+              <a
+                href="https://www.novanet.xyz/blog/x402-zkml-internet-native-verifiable-payments"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-gray-400 hover:text-white transition-colors"
+              >
+                About NovaNet
               </a>
               <a
                 href="https://github.com/hshadab/zkx402"
