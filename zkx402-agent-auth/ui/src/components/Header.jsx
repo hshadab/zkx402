@@ -5,16 +5,44 @@ export default function Header() {
     <header className="bg-dark-800 border-b border-dark-700">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-accent-green rounded-lg flex items-center justify-center">
-              <span className="text-2xl font-bold text-dark-900">Z</span>
+          <div className="flex items-center gap-6">
+            {/* NovaNet Logo */}
+            <div className="flex items-center">
+              <img
+                src="https://cdn.prod.website-files.com/65d52b07d5bc41614daa723f/665df12739c532f45b665fe7_logo-novanet.svg"
+                alt="NovaNet"
+                className="h-8 w-auto"
+              />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white">zkX402</h1>
-              <p className="text-sm text-gray-400">Agent Authorization with Zero-Knowledge ML</p>
+
+            {/* Service Info */}
+            <div className="border-l border-dark-600 pl-6">
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold text-white">zkX402 Authorization</h1>
+                <span className="px-2 py-1 text-xs font-semibold bg-accent-green/20 text-accent-green rounded">
+                  x402 Infrastructure
+                </span>
+              </div>
+              <p className="text-sm text-gray-400 mt-1">
+                Zero-Knowledge ML Authorization for x402 Payment Agents
+              </p>
             </div>
           </div>
+
           <div className="flex items-center gap-4">
+            {/* x402 Protocol Badge */}
+            <a
+              href="https://github.com/coinbase/x402"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-3 py-2 bg-dark-700 hover:bg-dark-600 rounded-lg transition-colors"
+              title="Built on x402 Protocol"
+            >
+              <span className="text-sm font-medium text-gray-300">x402</span>
+              <span className="text-xs text-gray-500">Protocol</span>
+            </a>
+
+            {/* GitHub Link */}
             <a
               href="https://github.com/hshadab/zkx402"
               target="_blank"
@@ -26,6 +54,16 @@ export default function Header() {
               </svg>
             </a>
           </div>
+        </div>
+
+        {/* Infrastructure Notice */}
+        <div className="mt-4 flex items-center gap-2 text-xs text-gray-500">
+          <svg className="w-4 h-4 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+          <span>
+            Powered by NovaNet • Core x402 Infrastructure Provider • Production Ready
+          </span>
         </div>
       </div>
     </header>
