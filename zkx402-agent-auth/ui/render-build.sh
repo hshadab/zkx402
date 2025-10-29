@@ -9,12 +9,6 @@ echo "========================================="
 echo "Current directory: $(pwd)"
 echo "Contents: $(ls -la)"
 
-# Initialize git submodules
-echo "Initializing git submodules..."
-cd ..
-git submodule update --init --recursive
-cd ui
-
 # Install Rust if not already installed
 if ! command -v rustc &> /dev/null; then
     echo "Installing Rust..."
