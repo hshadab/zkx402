@@ -1,0 +1,90 @@
+========================================
+zkX402 Model Testing - All 14 Models
+Testing approve and deny scenarios
+========================================
+
+[1;33m========== BASIC MODELS (3) ==========[0m
+Model: Simple Threshold - Approve: Sufficient balance
+Inputs: {"amount": "5000", "balance": "10000"}
+✗ FAILED: Expected true, got 
+
+Model: Simple Threshold - Deny: Insufficient balance
+Inputs: {"amount": "15000", "balance": "10000"}
+✗ FAILED: Expected false, got 
+
+Model: Percentage Limit - Approve: 5% (within 10%)
+Inputs: {"amount": "5000", "balance": "100000", "max_percentage": "10"}
+✗ FAILED: Expected true, got 
+
+Model: Percentage Limit - Deny: 15% (exceeds 10%)
+Inputs: {"amount": "15000", "balance": "100000", "max_percentage": "10"}
+✗ FAILED: Expected false, got 
+
+Model: Vendor Trust - Approve: High trust vendor
+Inputs: {"vendor_trust": "75", "min_trust": "50"}
+✗ FAILED: Expected true, got 
+
+Model: Vendor Trust - Deny: Low trust vendor
+Inputs: {"vendor_trust": "30", "min_trust": "50"}
+✗ FAILED: Expected false, got 
+
+[1;33m========== VELOCITY MODELS (3) ==========[0m
+Model: Hourly Velocity - Approve: Within hourly limit
+Inputs: {"amount": "5000", "spent_1h": "10000", "limit_1h": "20000"}
+✗ FAILED: Expected true, got 
+
+Model: Hourly Velocity - Deny: Exceeds hourly limit
+Inputs: {"amount": "15000", "spent_1h": "10000", "limit_1h": "20000"}
+✗ FAILED: Expected false, got 
+
+Model: Daily Velocity - Approve: Within daily limit
+Inputs: {"amount": "5000", "spent_24h": "20000", "limit_24h": "50000"}
+✗ FAILED: Expected true, got 
+
+Model: Daily Velocity - Deny: Exceeds daily limit
+Inputs: {"amount": "40000", "spent_24h": "20000", "limit_24h": "50000"}
+✗ FAILED: Expected false, got 
+
+Model: Daily Cap - Approve: Within daily cap
+Inputs: {"amount": "10000", "daily_spent": "5000", "daily_cap": "20000"}
+✗ FAILED: Expected true, got 
+
+Model: Daily Cap - Deny: Exceeds daily cap
+Inputs: {"amount": "20000", "daily_spent": "5000", "daily_cap": "20000"}
+✗ FAILED: Expected false, got 
+
+[1;33m========== ACCESS MODELS (1) ==========[0m
+Model: Age Gate - Approve: Adult over 21
+Inputs: {"age": "25", "min_age": "21"}
+✗ FAILED: Expected true, got 
+
+Model: Age Gate - Deny: Under age limit
+Inputs: {"age": "18", "min_age": "21"}
+✗ FAILED: Expected false, got 
+
+[1;33m========== ADVANCED MODELS (3) ==========[0m
+Model: Multi-Factor - Approve: All checks pass
+Inputs: {"amount": "5000", "balance": "100000", "spent_24h": "20000", "limit_24h": "50000", "vendor_trust": "75", "min_trust": "50"}
+✗ FAILED: Expected true, got 
+
+Model: Multi-Factor - Deny: Insufficient balance
+Inputs: {"amount": "5000", "balance": "3000", "spent_24h": "20000", "limit_24h": "50000", "vendor_trust": "75", "min_trust": "50"}
+✗ FAILED: Expected false, got 
+
+Model: Composite Scoring - Approve: High composite score
+Inputs: {"amount": "5000", "balance": "100000", "vendor_trust": "75", "user_history": "80"}
+✗ FAILED: Expected true, got 
+
+Model: Composite Scoring - Deny: Low composite score
+Inputs: {"amount": "5000", "balance": "6000", "vendor_trust": "20", "user_history": "30"}
+✗ FAILED: Expected false, got 
+
+Model: Risk Neural - Approve: Low risk
+Inputs: {"amount": "5000", "balance": "100000", "velocity_1h": "5000", "velocity_24h": "20000", "vendor_trust": "75"}
+✗ FAILED: Expected true, got 
+
+Model: Risk Neural - Deny: High risk
+Inputs: {"amount": "50000", "balance": "60000", "velocity_1h": "15000", "velocity_24h": "80000", "vendor_trust": "30"}
+✗ FAILED: Expected false, got 
+
+[1;33m========== TEST MODELS (4) ==========[0m
