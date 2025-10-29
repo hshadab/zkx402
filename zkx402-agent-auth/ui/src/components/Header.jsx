@@ -12,10 +12,12 @@ export default function Header() {
             {/* Logo and Brand */}
             <div className="flex items-center gap-2 sm:gap-4">
               <a
-                href="https://www.novanet.xyz/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center"
+                href="/"
+                onClick={(e) => {
+                  e.preventDefault()
+                  window.scrollTo({ top: 0, behavior: 'smooth' })
+                }}
+                className="flex items-center cursor-pointer"
               >
                 <img
                   src="https://cdn.prod.website-files.com/65d52b07d5bc41614daa723f/665df12739c532f45b665fe7_logo-novanet.svg"
@@ -24,9 +26,18 @@ export default function Header() {
                 />
               </a>
               <div className="h-6 w-px bg-dark-600 hidden sm:block"></div>
-              <span className="text-lg sm:text-xl font-bold bg-gradient-to-r from-accent-green to-accent-blue bg-clip-text text-transparent">
-                zkx402
-              </span>
+              <a
+                href="/"
+                onClick={(e) => {
+                  e.preventDefault()
+                  window.scrollTo({ top: 0, behavior: 'smooth' })
+                }}
+                className="cursor-pointer"
+              >
+                <span className="text-lg sm:text-xl font-bold bg-gradient-to-r from-accent-green to-accent-blue bg-clip-text text-transparent">
+                  zkx402
+                </span>
+              </a>
             </div>
 
             {/* Desktop Navigation Links */}
@@ -137,12 +148,17 @@ export default function Header() {
         <div className="container mx-auto px-4 py-8 sm:py-12 md:py-16 max-w-7xl relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-dark-700/50 backdrop-blur-sm border border-accent-green/20 rounded-full mb-6 sm:mb-8">
+            <a
+              href="https://github.com/ICME-Lab/jolt-atlas"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-dark-700/50 backdrop-blur-sm border border-accent-green/20 rounded-full mb-6 sm:mb-8 hover:border-accent-green/40 transition-colors"
+            >
               <svg className="w-4 h-4 text-accent-green flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
               <span className="text-xs sm:text-sm font-medium text-gray-300">Powered by JOLT Atlas zkML</span>
-            </div>
+            </a>
 
             {/* Main Heading */}
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 leading-tight px-4">
