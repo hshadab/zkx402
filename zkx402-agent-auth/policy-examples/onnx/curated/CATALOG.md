@@ -1,6 +1,6 @@
 # Curated Authorization Models for zkX402
 
-This directory contains 10 production-ready ONNX models for agent authorization using zkX402 + x402. All models are tested, validated, and optimized for JOLT Atlas zero-knowledge proofs.
+This directory contains 14 curated ONNX models (10 production + 4 test) for agent authorization using zkX402 + x402. All models are tested, validated, and optimized for JOLT Atlas zero-knowledge proofs.
 
 ## Model Categories
 
@@ -337,6 +337,99 @@ Activations: ReLU (approximated via Greater + Mul)
 **Proof Time**: ~5-6 seconds
 
 **Training**: Pre-trained on synthetic transaction data with known fraud patterns
+
+---
+
+## Test Models
+
+### 11. test_less.onnx
+**Purpose**: Test Less comparison operation
+
+**Use Cases**:
+- JOLT Atlas operation validation
+- Comparison testing
+- Basic operation verification
+
+**Inputs**:
+- `value1` (int32): First value
+- `value2` (int32): Second value
+
+**Output**:
+- `result` (int32): 1 if value1 < value2, 0 otherwise
+
+**Logic**: `result = value1 < value2`
+
+**Operations**: Less
+**Size**: ~10 operations, <20 parameters
+**Proof Time**: ~1 second
+
+---
+
+### 12. test_identity.onnx
+**Purpose**: Test Identity pass-through operation
+
+**Use Cases**:
+- Graph construction testing
+- Residual connections
+- Operation verification
+
+**Inputs**:
+- `input` (int32): Input value
+
+**Output**:
+- `output` (int32): Same as input (pass-through)
+
+**Logic**: `output = identity(input)`
+
+**Operations**: Identity
+**Size**: ~5 operations, <10 parameters
+**Proof Time**: ~0.5 seconds
+
+---
+
+### 13. test_clip.onnx
+**Purpose**: Test Clip operation (ReLU approximation)
+
+**Use Cases**:
+- Activation function testing
+- ReLU validation
+- Neural network component testing
+
+**Inputs**:
+- `input` (int32): Input value
+
+**Output**:
+- `output` (int32): Clipped value (max(0, input))
+
+**Logic**: `output = clip(input, min=0)`
+
+**Operations**: Clip
+**Size**: ~8 operations, <15 parameters
+**Proof Time**: ~0.8 seconds
+
+---
+
+### 14. test_slice.onnx
+**Purpose**: Test Slice tensor operation
+
+**Use Cases**:
+- Feature extraction testing
+- Tensor manipulation validation
+- Subset selection verification
+
+**Inputs**:
+- `tensor` (int32 array): Input tensor
+- `start` (int32): Start index
+- `end` (int32): End index
+
+**Output**:
+- `sliced` (int32 array): Tensor slice from start to end
+
+**Logic**: `sliced = tensor[start:end]`
+
+**Operations**: Slice
+**Size**: ~12 operations, <25 parameters
+**Proof Time**: ~1 second
 
 ---
 

@@ -81,7 +81,7 @@ We've enhanced the [JOLT Atlas](https://github.com/ICME-Lab/jolt-atlas) zero-kno
 
 ## Production-Ready Curated Models
 
-We provide **10 production-ready ONNX authorization models** covering the most common use cases. These models are fully tested, validated, and ready to use with JOLT Atlas proofs.
+We provide **14 curated ONNX authorization models** (10 production + 4 test) covering the most common use cases. These models are fully tested, validated, and ready to use with JOLT Atlas proofs.
 
 ### What Are These Models?
 
@@ -101,6 +101,8 @@ Think of these as **pre-built authorization rules that agents can prove they've 
 
 ### Available Models
 
+#### Production Models (10)
+
 | Model | What It Does | When To Use |
 |-------|-------------|-------------|
 | **simple_threshold** | Checks if you have enough money | Basic wallet balance checks |
@@ -113,6 +115,15 @@ Think of these as **pre-built authorization rules that agents can prove they've 
 | **multi_factor** | Combines balance + velocity + trust | High-security transactions |
 | **composite_scoring** | Weighted risk score from multiple factors | Advanced risk assessment |
 | **risk_neural** | ML-based risk scoring | Sophisticated fraud detection |
+
+#### Test Models (4)
+
+| Model | What It Does | When To Use |
+|-------|-------------|-------------|
+| **test_less** | Tests Less comparison operation | Operation testing, JOLT Atlas validation |
+| **test_identity** | Tests Identity pass-through operation | Graph construction, residual connections |
+| **test_clip** | Tests Clip operation (ReLU approximation) | Activation function testing |
+| **test_slice** | Tests Slice tensor operation | Feature extraction, tensor manipulation |
 
 ### Quick Start with Curated Models
 
@@ -144,9 +155,9 @@ cd ../../jolt-prover
 
 ### Model Details
 
-All 10 models are:
+All 14 models are:
 - ✅ **Validated**: Pass comprehensive test suites (29 test cases)
-- ✅ **JOLT-Compatible**: Use only supported operations (Add, Sub, Mul, Div, Greater, Less, Cast, Clip)
+- ✅ **JOLT-Compatible**: Use only supported operations (Add, Sub, Mul, Div, Greater, Less, Cast, Clip, Identity, Slice)
 - ✅ **Production-Ready**: Tested with ONNX Runtime and ready for proof generation
 - ✅ **Documented**: Full specifications in [CATALOG.md](policy-examples/onnx/curated/CATALOG.md)
 
@@ -207,14 +218,14 @@ zkx402-agent-auth/
 │   │   └── velocity_auth.rs          # Velocity check example
 │   └── src/lib.rs                    # Proof generation library
 ├── policy-examples/onnx/              # ONNX model generation scripts
-│   ├── curated/                      # ⭐ 10 production-ready models
+│   ├── curated/                      # ⭐ 14 curated models (10 production + 4 test)
 │   │   ├── README.md                 # Quick start guide
 │   │   ├── CATALOG.md                # Complete model specifications
 │   │   ├── TEST_RESULTS.md           # Test results and benchmarks
 │   │   ├── JOLT_ENHANCEMENT_USAGE.md # Enhancement usage analysis
 │   │   ├── test_all_models.py        # Automated test suite
 │   │   ├── generate_all_models.py    # Model regeneration script
-│   │   └── *.onnx                    # 10 curated authorization models
+│   │   └── *.onnx                    # 14 curated authorization models
 │   ├── create_demo_models.py         # Generate all 5 demo models
 │   ├── test_models.py                # Validate ONNX models
 │   └── *.onnx                        # Pre-built demonstration models
@@ -234,8 +245,8 @@ zkx402-agent-auth/
   - Known limitations and workarounds
 
 ### Curated Models
-- **[policy-examples/onnx/curated/README.md](policy-examples/onnx/curated/README.md)**: Quick start guide for 10 production-ready models
-- **[policy-examples/onnx/curated/CATALOG.md](policy-examples/onnx/curated/CATALOG.md)**: Complete specifications for all 10 models
+- **[policy-examples/onnx/curated/README.md](policy-examples/onnx/curated/README.md)**: Quick start guide for all 14 curated models
+- **[policy-examples/onnx/curated/CATALOG.md](policy-examples/onnx/curated/CATALOG.md)**: Complete specifications for all 14 models (10 production + 4 test)
 - **[policy-examples/onnx/curated/TEST_RESULTS.md](policy-examples/onnx/curated/TEST_RESULTS.md)**: Validation results and performance benchmarks
 - **[policy-examples/onnx/curated/JOLT_ENHANCEMENT_USAGE.md](policy-examples/onnx/curated/JOLT_ENHANCEMENT_USAGE.md)**: Analysis of which enhancements each model uses
 

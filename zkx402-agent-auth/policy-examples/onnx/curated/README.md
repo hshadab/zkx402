@@ -1,6 +1,6 @@
 # Curated Authorization Models
 
-10 production-ready ONNX models for x402 agent authorization with zkX402.
+14 curated ONNX models (10 production + 4 test) for x402 agent authorization with zkX402.
 
 ## Quick Start
 
@@ -14,6 +14,8 @@ cd jolt-prover
 
 ## Available Models
 
+### Production Models (10)
+
 | Model | Use Case | Speed | Inputs |
 |-------|----------|-------|--------|
 | `simple_threshold` | Basic balance check | ⚡⚡⚡ | amount, balance |
@@ -26,6 +28,15 @@ cd jolt-prover
 | `multi_factor` | Comprehensive check | ⚡ | 6 inputs (balance+velocity+trust) |
 | `composite_scoring` | Weighted risk score | ⚡⚡ | amount, balance, vendor_trust, user_history |
 | `risk_neural` | ML-based risk | ⚡ | amount, balance, velocity_1h, velocity_24h, vendor_trust |
+
+### Test Models (4)
+
+| Model | Use Case | Speed | Inputs |
+|-------|----------|-------|--------|
+| `test_less` | Less comparison testing | ⚡⚡⚡ | value1, value2 |
+| `test_identity` | Identity operation testing | ⚡⚡⚡ | input |
+| `test_clip` | Clip/ReLU testing | ⚡⚡⚡ | input |
+| `test_slice` | Slice operation testing | ⚡⚡⚡ | tensor, start, end |
 
 ## API Usage
 
@@ -70,7 +81,7 @@ python3 curated/generate_risk_neural.py
 ```
 
 All models are validated for JOLT Atlas compatibility:
-- ✅ Operations: Add, Sub, Mul, Div, Greater, Less, Cast, Clip
+- ✅ Operations: Add, Sub, Mul, Div, Greater, Less, Cast, Clip, Identity, Slice
 - ✅ Size: < MAX_TENSOR_SIZE (1024 elements)
 - ✅ Integer arithmetic with scale factors
 
