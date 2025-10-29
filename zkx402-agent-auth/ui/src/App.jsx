@@ -17,7 +17,7 @@ function App() {
     <div className="min-h-screen bg-dark-900">
       <Header />
 
-      <main className="container mx-auto px-4 py-8 max-w-7xl">
+      <main id="simulator" className="container mx-auto px-4 py-8 max-w-7xl">
         <FreeTierBanner />
         {/* Tab Navigation */}
         <div className="flex gap-4 mb-8 border-b border-dark-700">
