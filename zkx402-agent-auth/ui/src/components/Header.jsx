@@ -27,14 +27,10 @@ export default function Header() {
               </a>
               <div className="h-6 w-px bg-dark-600 hidden sm:block"></div>
               <a
-                href="/"
-                onClick={(e) => {
-                  e.preventDefault()
-                  window.scrollTo({ top: 0, behavior: 'smooth' })
-                }}
+                href="https://www.zk-x402.com/"
                 className="cursor-pointer"
               >
-                <span className="text-lg sm:text-xl font-bold bg-gradient-to-r from-accent-green to-accent-blue bg-clip-text text-transparent">
+                <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-accent-green to-accent-blue bg-clip-text text-transparent leading-none">
                   zkx402
                 </span>
               </a>
