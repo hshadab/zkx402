@@ -37,11 +37,12 @@ class BlockchainMonitor {
       const currentBlock = await this.provider.getBlockNumber();
       console.log(`📦 Current Base block: ${currentBlock}`);
 
-      // Fetch transactions from last 7 days (~604,800 blocks at 2s/block = ~302,400 blocks)
-      const blocksToScan = 302400; // ~7 days
+      // Fetch transactions from last 24 hours (~43,200 blocks at 2s/block)
+      // Reduced from 7 days to avoid RPC rate limits
+      const blocksToScan = 43200; // ~24 hours
       const fromBlock = Math.max(0, currentBlock - blocksToScan);
 
-      await this.fetchTransactions(fromBlock, currentBlock);
+      await this.fetchTransactionsChunked(fromBlock, currentBlock);
 
       this.lastFetchedBlock = currentBlock;
       this.isInitialized = true;
@@ -53,17 +54,43 @@ class BlockchainMonitor {
   }
 
   /**
+   * Fetch transactions in chunks to avoid RPC rate limits
+   */
+  async fetchTransactionsChunked(fromBlock, toBlock) {
+    const CHUNK_SIZE = 10000; // Process 10k blocks at a time (~5.5 hours)
+    let currentFrom = fromBlock;
+
+    console.log(`🔍 Scanning blocks ${fromBlock} to ${toBlock} in chunks of ${CHUNK_SIZE}...`);
+
+    while (currentFrom < toBlock) {
+      const currentTo = Math.min(currentFrom + CHUNK_SIZE, toBlock);
+      await this.fetchTransactions(currentFrom, currentTo);
+
+      // Small delay to avoid rate limiting
+      if (currentTo < toBlock) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      currentFrom = currentTo + 1;
+    }
+
+    console.log(`✅ Finished scanning. Found ${this.cachedTransactions.length} total transactions`);
+  }
+
+  /**
    * Fetch USDC transfer events to our wallet
    */
   async fetchTransactions(fromBlock, toBlock) {
     try {
-      console.log(`🔍 Scanning blocks ${fromBlock} to ${toBlock} for USDC transfers...`);
+      console.log(`  📦 Chunk: blocks ${fromBlock} to ${toBlock}`);
 
       // Query Transfer events where 'to' is our payment wallet
       const filter = this.usdcContract.filters.Transfer(null, PAYMENT_WALLET);
       const events = await this.usdcContract.queryFilter(filter, fromBlock, toBlock);
 
-      console.log(`📋 Found ${events.length} transfer events`);
+      if (events.length > 0) {
+        console.log(`  📋 Found ${events.length} transfer events in this chunk`);
+      }
 
       for (const event of events) {
         const block = await event.getBlock();
@@ -94,10 +121,9 @@ class BlockchainMonitor {
       this.cachedTransactions.sort((a, b) =>
         new Date(b.timestamp) - new Date(a.timestamp)
       );
-
-      console.log(`💾 Cached ${this.cachedTransactions.length} total transactions`);
     } catch (error) {
-      console.error('❌ Error fetching transactions:', error.message);
+      console.error(`  ❌ Error fetching chunk ${fromBlock}-${toBlock}:`, error.message);
+      // Continue even if one chunk fails
     }
   }
 
