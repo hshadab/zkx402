@@ -36,14 +36,14 @@ const CURATED_MODELS = {
     proofTime: '6.6s'
   },
   percentage_limit: {
-    file: 'curated/percentage_limit.onnx',
+    file: 'curated/percentage_limit_no_div.onnx',
     name: 'Percentage Limit',
-    description: 'Limits spending to X% of balance',
+    description: 'Limits spending to X% of balance (division-free)',
     category: 'Basic',
     inputs: ['amount', 'balance', 'max_percentage'],
     price: '1500',
     useCase: 'Percentage-based spending limits',
-    operations: 15,
+    operations: 20,
     proofTime: '~7s'
   },
   vendor_trust: {
@@ -113,25 +113,25 @@ const CURATED_MODELS = {
     proofTime: '6.2s'
   },
   composite_scoring: {
-    file: 'curated/composite_scoring.onnx',
+    file: 'curated/composite_scoring_no_div.onnx',
     name: 'Composite Scoring',
-    description: 'Weighted risk score from multiple factors',
+    description: 'Weighted risk score from multiple factors (division-free)',
     category: 'Advanced',
     inputs: ['amount', 'balance', 'vendor_trust', 'user_history'],
     price: '4000',
     useCase: 'Advanced risk assessment',
-    operations: 72,
-    proofTime: '9.3s'
+    operations: 32,
+    proofTime: '~8s'
   },
   risk_neural: {
-    file: 'curated/risk_neural.onnx',
+    file: 'curated/risk_neural_no_div.onnx',
     name: 'Risk Neural',
-    description: 'ML-based risk scoring with neural network',
+    description: 'ML-based risk scoring with neural network (division-free)',
     category: 'Advanced',
     inputs: ['amount', 'balance', 'velocity_1h', 'velocity_24h', 'vendor_trust'],
     price: '6000',
     useCase: 'Sophisticated fraud detection',
-    operations: 47,
+    operations: 46,
     proofTime: '~8s'
   },
   // Test models for operation verification
