@@ -30,8 +30,8 @@ export const CURATED_MODELS = [
     featured: false,  // Trivial if-then logic
     production: true,  // Available in API but not featured
     examples: [
-      { amount: '5000', balance: '10000', expected: 'approved', desc: 'Sufficient balance' },
-      { amount: '15000', balance: '10000', expected: 'denied', desc: 'Insufficient balance' }
+      { amount: '50.00', balance: '100.00', expected: 'approved', desc: 'Sufficient balance' },
+      { amount: '150.00', balance: '100.00', expected: 'denied', desc: 'Insufficient balance' }
     ]
   },
   {
@@ -48,8 +48,8 @@ export const CURATED_MODELS = [
     featured: true,   // Has actual computation (multiplication + division)
     production: true,
     examples: [
-      { amount: '5000', balance: '100000', max_percentage: '10', expected: 'approved', desc: '5% of balance (within 10%)' },
-      { amount: '15000', balance: '100000', max_percentage: '10', expected: 'denied', desc: '15% of balance (exceeds 10%)' }
+      { amount: '50.00', balance: '1000.00', max_percentage: '10', expected: 'approved', desc: '5% of balance (within 10%)' },
+      { amount: '150.00', balance: '1000.00', max_percentage: '10', expected: 'denied', desc: '15% of balance (exceeds 10%)' }
     ]
   },
   {
@@ -86,8 +86,8 @@ export const CURATED_MODELS = [
     featured: false,  // Simple addition + comparison
     production: true,
     examples: [
-      { amount: '5000', spent_1h: '10000', limit_1h: '20000', expected: 'approved', desc: 'Within hourly limit' },
-      { amount: '15000', spent_1h: '10000', limit_1h: '20000', expected: 'denied', desc: 'Exceeds hourly limit' }
+      { amount: '50.00', spent_1h: '100.00', limit_1h: '200.00', expected: 'approved', desc: 'Within hourly limit' },
+      { amount: '150.00', spent_1h: '100.00', limit_1h: '200.00', expected: 'denied', desc: 'Exceeds hourly limit' }
     ]
   },
   {
@@ -104,8 +104,8 @@ export const CURATED_MODELS = [
     featured: false,  // Duplicate of velocity_1h
     production: true,
     examples: [
-      { amount: '5000', spent_24h: '20000', limit_24h: '50000', expected: 'approved', desc: 'Within daily limit' },
-      { amount: '40000', spent_24h: '20000', limit_24h: '50000', expected: 'denied', desc: 'Exceeds daily limit' }
+      { amount: '50.00', spent_24h: '200.00', limit_24h: '500.00', expected: 'approved', desc: 'Within daily limit' },
+      { amount: '400.00', spent_24h: '200.00', limit_24h: '500.00', expected: 'denied', desc: 'Exceeds daily limit' }
     ]
   },
   {
@@ -122,8 +122,8 @@ export const CURATED_MODELS = [
     featured: false,  // Duplicate of velocity checks
     production: true,
     examples: [
-      { amount: '10000', daily_spent: '5000', daily_cap: '20000', expected: 'approved', desc: 'Within daily cap' },
-      { amount: '20000', daily_spent: '5000', daily_cap: '20000', expected: 'denied', desc: 'Exceeds daily cap' }
+      { amount: '100.00', daily_spent: '50.00', daily_cap: '200.00', expected: 'approved', desc: 'Within daily cap' },
+      { amount: '200.00', daily_spent: '50.00', daily_cap: '200.00', expected: 'denied', desc: 'Exceeds daily cap' }
     ]
   },
 
@@ -163,20 +163,20 @@ export const CURATED_MODELS = [
     production: true,
     examples: [
       {
-        amount: '5000',
-        balance: '100000',
-        spent_24h: '20000',
-        limit_24h: '50000',
+        amount: '50.00',
+        balance: '1000.00',
+        spent_24h: '200.00',
+        limit_24h: '500.00',
         vendor_trust: '75',
         min_trust: '50',
         expected: 'approved',
         desc: 'All checks pass'
       },
       {
-        amount: '5000',
-        balance: '3000',
-        spent_24h: '20000',
-        limit_24h: '50000',
+        amount: '50.00',
+        balance: '30.00',
+        spent_24h: '200.00',
+        limit_24h: '500.00',
         vendor_trust: '75',
         min_trust: '50',
         expected: 'denied',
@@ -199,16 +199,16 @@ export const CURATED_MODELS = [
     production: true,
     examples: [
       {
-        amount: '5000',
-        balance: '100000',
+        amount: '50.00',
+        balance: '1000.00',
         vendor_trust: '75',
         user_history: '80',
         expected: 'approved',
         desc: 'High composite score'
       },
       {
-        amount: '5000',
-        balance: '6000',
+        amount: '50.00',
+        balance: '60.00',
         vendor_trust: '20',
         user_history: '30',
         expected: 'denied',
@@ -231,19 +231,19 @@ export const CURATED_MODELS = [
     production: true,
     examples: [
       {
-        amount: '5000',
-        balance: '100000',
-        velocity_1h: '5000',
-        velocity_24h: '20000',
+        amount: '50.00',
+        balance: '1000.00',
+        velocity_1h: '50.00',
+        velocity_24h: '200.00',
         vendor_trust: '75',
         expected: 'approved',
         desc: 'Low risk transaction'
       },
       {
-        amount: '50000',
-        balance: '60000',
-        velocity_1h: '15000',
-        velocity_24h: '80000',
+        amount: '500.00',
+        balance: '600.00',
+        velocity_1h: '150.00',
+        velocity_24h: '800.00',
         vendor_trust: '30',
         expected: 'denied',
         desc: 'High risk transaction'
