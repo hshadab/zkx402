@@ -344,6 +344,71 @@ GET /api/policies/simple_threshold/schema
 
 ---
 
+### POST `/api/policies/:id/simulate`
+
+Simulate policy execution without generating zkML proof. Fast and free for testing.
+
+**Request:**
+```bash
+POST /api/policies/simple_threshold/simulate
+Content-Type: application/json
+
+{
+  "inputs": {
+    "amount": 5000,
+    "balance": 10000
+  }
+}
+```
+
+**Path Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | string | Yes | Policy ID (e.g., `simple_threshold`) |
+
+**Request Body:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `inputs` | object | Yes | Input values matching policy schema |
+
+**Response:** `200 OK`
+```json
+{
+  "simulation": true,
+  "approved": true,
+  "output": 1,
+  "policy_id": "simple_threshold",
+  "policy_name": "Simple Threshold",
+  "inputs": {
+    "amount": 5000,
+    "balance": 10000
+  },
+  "execution_time_ms": "<1ms (simulation only)",
+  "note": "This is a simulation without zkML proof. Use /api/generate-proof to get a verifiable proof.",
+  "proof_generation": {
+    "endpoint": "http://localhost:3001/api/generate-proof",
+    "estimated_time": "~0.5s",
+    "estimated_cost": "0.0001"
+  }
+}
+```
+
+**Benefits:**
+- Instant results (< 1ms) without zkML proof generation
+- No payment required
+- Perfect for testing policies before committing to proof generation
+- Returns estimated cost and time for actual proof generation
+
+**Error Responses:**
+
+- `400 Bad Request` - Missing or invalid inputs
+- `404 Not Found` - Policy ID does not exist
+- `500 Internal Server Error` - Simulation failed
+
+---
+
 ## Proof Generation
 
 ### POST `/api/generate-proof`

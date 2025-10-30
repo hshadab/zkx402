@@ -243,6 +243,80 @@ function registerAgentRoutes(app) {
       }
     });
   });
+
+  // ========== AGENT API: POLICY SIMULATION ==========
+  app.post('/api/policies/:id/simulate', async (req, res) => {
+    const { id } = req.params;
+    const { inputs } = req.body;
+
+    const model = CURATED_MODELS[id];
+
+    if (!model) {
+      return res.status(404).json({
+        error: 'Policy not found',
+        policy_id: id
+      });
+    }
+
+    // Validate inputs
+    const missingInputs = model.inputs.filter(input => !(input in inputs));
+    if (missingInputs.length > 0) {
+      return res.status(400).json({
+        error: 'Missing required inputs',
+        missing: missingInputs,
+        required: model.inputs
+      });
+    }
+
+    try {
+      // Use ONNX Runtime to evaluate model (faster than JOLT proof generation)
+      const onnx = require('onnxruntime-node');
+      const fs = require('fs');
+      const path = require('path');
+
+      const modelPath = path.join(__dirname, '..', 'policy-examples', 'onnx', model.file);
+
+      // Load and run ONNX model
+      const session = await onnx.InferenceSession.create(modelPath);
+
+      // Prepare input tensor (using float32 as ONNX models expect float)
+      const inputTensor = new onnx.Tensor('float32',
+        model.inputs.map(inp => parseFloat(inputs[inp]) || 0),
+        [1, model.inputs.length]
+      );
+
+      // Run inference
+      const feeds = {};
+      feeds[session.inputNames[0]] = inputTensor;
+      const output = await session.run(feeds);
+      const result = output[session.outputNames[0]].data[0];
+
+      const approved = result === 1;
+
+      res.json({
+        simulation: true,
+        approved,
+        output: result,
+        policy_id: id,
+        policy_name: model.name,
+        inputs,
+        execution_time_ms: '<1ms (simulation only)',
+        note: 'This is a simulation without zkML proof. Use /api/generate-proof to get a verifiable proof.',
+        proof_generation: {
+          endpoint: `${BASE_URL}/api/generate-proof`,
+          estimated_time: model.proofTime,
+          estimated_cost: formatPrice(model.price)
+        }
+      });
+    } catch (error) {
+      console.error('Simulation error:', error);
+      res.status(500).json({
+        error: 'Simulation failed',
+        details: error.message,
+        policy_id: id
+      });
+    }
+  });
 }
 
 module.exports = { registerAgentRoutes, setBaseUrl };

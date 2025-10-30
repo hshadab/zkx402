@@ -45,7 +45,48 @@ curl https://your-server.com/api/policies/simple_threshold/schema
 - Usage examples
 - Pricing information
 
-### 4. Generate Proof
+### 4. Simulate Policy (Fast Testing)
+
+```bash
+curl -X POST https://your-server.com/api/policies/simple_threshold/simulate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "inputs": {
+      "amount": 5000,
+      "balance": 10000
+    }
+  }'
+```
+
+**Returns:**
+```json
+{
+  "simulation": true,
+  "approved": true,
+  "output": 1,
+  "policy_id": "simple_threshold",
+  "policy_name": "Simple Threshold",
+  "inputs": {
+    "amount": 5000,
+    "balance": 10000
+  },
+  "execution_time_ms": "<1ms (simulation only)",
+  "note": "This is a simulation without zkML proof. Use /api/generate-proof to get a verifiable proof.",
+  "proof_generation": {
+    "endpoint": "https://your-server.com/api/generate-proof",
+    "estimated_time": "~0.5s",
+    "estimated_cost": "0.0001"
+  }
+}
+```
+
+**Benefits:**
+- Instant results (< 1ms) without generating expensive zkML proofs
+- Test policies before committing to proof generation
+- No payment required for simulation
+- Perfect for testing and validation workflows
+
+### 5. Generate Proof
 
 ```bash
 curl -X POST https://your-server.com/api/generate-proof \

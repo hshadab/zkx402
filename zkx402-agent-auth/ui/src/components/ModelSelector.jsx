@@ -1,17 +1,9 @@
-import React, { useState } from 'react'
-import { getFeaturedModels, MODEL_CATEGORIES, getAllCategories } from '../utils/curatedModels'
+import React from 'react'
+import { getFeaturedModels } from '../utils/curatedModels'
 
 export default function ModelSelector({ selectedModel, onModelChange }) {
-  const [selectedCategory, setSelectedCategory] = useState('All')
-
   // Use featured models only (4 advanced models)
   const FEATURED_MODELS = getFeaturedModels()
-
-  const categories = ['All', ...getAllCategories()]
-
-  const filteredModels = selectedCategory === 'All'
-    ? FEATURED_MODELS
-    : FEATURED_MODELS.filter(m => m.category === selectedCategory)
 
   const getSelectedModel = () => FEATURED_MODELS.find(m => m.id === selectedModel)
   const selected = getSelectedModel()
@@ -23,26 +15,6 @@ export default function ModelSelector({ selectedModel, onModelChange }) {
         <p className="text-sm text-gray-400 mt-1">
           Choose from our 4 advanced zkML authorization policies
         </p>
-      </div>
-
-      {/* Category Filter */}
-      <div className="flex gap-2 mb-6 flex-wrap">
-        {categories.map(cat => (
-          <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            className={`px-4 py-2 rounded-lg font-medium transition-all ${
-              selectedCategory === cat
-                ? 'bg-accent-blue text-white'
-                : 'bg-dark-700 text-gray-400 hover:bg-dark-600'
-            }`}
-          >
-            {cat === 'All' ? 'All Models' : cat}
-            <span className="ml-2 text-xs opacity-70">
-              ({cat === 'All' ? FEATURED_MODELS.length : FEATURED_MODELS.filter(m => m.category === cat).length})
-            </span>
-          </button>
-        ))}
       </div>
 
       {/* Selected Model Info */}
@@ -57,17 +29,6 @@ export default function ModelSelector({ selectedModel, onModelChange }) {
               <p className="text-xs text-gray-400">
                 <span className="font-medium">Use Case:</span> {selected.useCase}
               </p>
-            </div>
-            <div className="text-right">
-              <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                selected.category === 'Basic' ? 'bg-accent-green/20 text-accent-green' :
-                selected.category === 'Velocity' ? 'bg-accent-blue/20 text-accent-blue' :
-                selected.category === 'Access' ? 'bg-accent-purple/20 text-accent-purple' :
-                selected.category === 'Advanced' ? 'bg-accent-orange/20 text-accent-orange' :
-                'bg-gray-600/20 text-gray-400'
-              }`}>
-                {selected.category}
-              </span>
             </div>
           </div>
           <div className="flex flex-wrap gap-3 sm:gap-4 mt-3 text-xs text-gray-500">
@@ -159,11 +120,10 @@ export default function ModelSelector({ selectedModel, onModelChange }) {
         </div>
       )}
 
-      {/* Model Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredModels.map(model => {
+      {/* Model Grid - 4 cards in a row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        {FEATURED_MODELS.map(model => {
           const isSelected = selectedModel === model.id
-          const categoryInfo = MODEL_CATEGORIES[model.category]
 
           return (
             <button
@@ -172,14 +132,14 @@ export default function ModelSelector({ selectedModel, onModelChange }) {
               className={`
                 p-4 rounded-lg border-2 text-left transition-all transform hover:scale-105
                 ${isSelected
-                  ? `border-${categoryInfo?.color || 'accent-blue'} bg-${categoryInfo?.color || 'accent-blue'}/10 shadow-lg`
+                  ? 'border-accent-blue bg-accent-blue/10 shadow-lg'
                   : 'border-dark-600 bg-dark-700 hover:border-dark-500'
                 }
               `}
             >
               <div className="flex items-start justify-between mb-2">
                 <h3 className={`font-semibold ${
-                  isSelected ? `text-${categoryInfo?.color || 'accent-blue'}` : 'text-white'
+                  isSelected ? 'text-accent-blue' : 'text-white'
                 }`}>
                   {model.name}
                 </h3>
@@ -211,28 +171,6 @@ export default function ModelSelector({ selectedModel, onModelChange }) {
             </button>
           )
         })}
-      </div>
-
-      {filteredModels.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
-          <p>No models found in this category</p>
-        </div>
-      )}
-
-      {/* Legend */}
-      <div className="mt-6 pt-6 border-t border-dark-600">
-        <h4 className="text-sm font-medium text-gray-400 mb-3">Model Categories</h4>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {Object.entries(MODEL_CATEGORIES).map(([name, info]) => (
-            <div key={name} className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-current opacity-40"></div>
-              <div>
-                <div className="text-sm font-medium text-white">{name}</div>
-                <div className="text-xs text-gray-500">{info.description}</div>
-              </div>
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   )
