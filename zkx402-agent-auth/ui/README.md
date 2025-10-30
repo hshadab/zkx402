@@ -10,6 +10,8 @@ Web interface for demonstrating zero-knowledge machine learning authorization us
 - **Interactive simulator** with adjustable input parameters
 - **Performance metrics** display
 - **Zero-knowledge proof verification**
+- **Analytics dashboard** with real-time usage tracking, revenue metrics, and model performance statistics
+- **Webhook support** for async proof completion notifications
 
 ## Tech Stack
 
@@ -60,7 +62,9 @@ ui/
 │   │   ├── ModelSelector.jsx
 │   │   ├── AuthorizationSimulator.jsx
 │   │   ├── ProofVisualization.jsx
-│   │   └── PerformanceMetrics.jsx
+│   │   ├── PerformanceMetrics.jsx
+│   │   ├── Analytics.jsx
+│   │   └── ApiDocs.jsx
 │   ├── pages/           # Page-level components
 │   ├── utils/           # Utility functions
 │   ├── api/             # API integration
@@ -68,6 +72,8 @@ ui/
 │   ├── main.jsx         # React entry point
 │   └── index.css        # Global styles
 ├── server.js            # Express backend server
+├── analytics-manager.js # Analytics tracking module
+├── webhook-manager.js   # Webhook notifications
 ├── package.json         # Dependencies
 ├── vite.config.js       # Vite configuration
 ├── tailwind.config.js   # Tailwind CSS config
@@ -138,6 +144,41 @@ Generate zkML proof for authorization
     "response": "0x...",
     "evaluation": "0x..."
   }
+}
+```
+
+### `GET /api/analytics/stats`
+Get comprehensive analytics statistics
+
+**Response:**
+```json
+{
+  "uptime": 3600,
+  "totalRequests": 150,
+  "requests24h": 45,
+  "successRate": 94.5,
+  "avgResponseTime": 1200,
+  "totalRevenue": "0.0150",
+  "revenue24h": "0.0045",
+  "verifiedPayments": 12,
+  "recentRequests": [...],
+  "recentPayments": [...]
+}
+```
+
+### `GET /api/analytics/models`
+Get per-model usage breakdown
+
+**Response:**
+```json
+{
+  "simple_threshold": {
+    "totalRequests": 50,
+    "successRate": "96.0",
+    "paidRequests": 8,
+    "avgResponseTime": "850"
+  },
+  ...
 }
 ```
 

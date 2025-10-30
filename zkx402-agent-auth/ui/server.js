@@ -16,6 +16,7 @@ const {
 const { getPaymentInfo, formatPrice } = require('./base-payment');
 const { registerAgentRoutes, setBaseUrl } = require('./agent-api-routes');
 const webhookManager = require('./webhook-manager');
+const analyticsManager = require('./analytics-manager');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -504,10 +505,35 @@ app.post('/api/generate-proof', uiProofLimiter, async (req, res) => {
       await webhookManager.completeProofRequest(requestId, result);
     }
 
+    // Log successful request to analytics
+    analyticsManager.logRequest({
+      endpoint: '/api/generate-proof',
+      method: 'POST',
+      modelId,
+      success: true,
+      responseTime: proofTime,
+      userAgent: req.headers['user-agent'],
+      ip: req.ip,
+      hasPaidHeader: !!req.headers['x402-paid']
+    });
+
     res.json(result);
 
   } catch (error) {
     console.error('[API] Proof generation failed:', error);
+
+    // Log failed request to analytics
+    analyticsManager.logRequest({
+      endpoint: '/api/generate-proof',
+      method: 'POST',
+      modelId: req.body.model,
+      success: false,
+      errorMessage: error.message,
+      userAgent: req.headers['user-agent'],
+      ip: req.ip,
+      hasPaidHeader: !!req.headers['x402-paid']
+    });
+
     res.status(500).json({
       error: 'Proof generation failed',
       message: error.message
@@ -539,6 +565,38 @@ app.get('/health', (req, res) => {
     models: Object.keys(CURATED_MODELS).length,
     timestamp: new Date().toISOString()
   });
+});
+
+// ========== ANALYTICS API ENDPOINTS ==========
+app.get('/api/analytics/stats', (req, res) => {
+  try {
+    const stats = analyticsManager.getStats();
+    res.json(stats);
+  } catch (error) {
+    console.error('[Analytics] Error getting stats:', error);
+    res.status(500).json({ error: 'Failed to get analytics stats' });
+  }
+});
+
+app.get('/api/analytics/models', (req, res) => {
+  try {
+    const breakdown = analyticsManager.getModelBreakdown();
+    res.json(breakdown);
+  } catch (error) {
+    console.error('[Analytics] Error getting model breakdown:', error);
+    res.status(500).json({ error: 'Failed to get model breakdown' });
+  }
+});
+
+app.get('/api/analytics/timeseries', (req, res) => {
+  try {
+    const hours = parseInt(req.query.hours) || 24;
+    const timeseries = analyticsManager.getTimeSeries(hours);
+    res.json(timeseries);
+  } catch (error) {
+    console.error('[Analytics] Error getting timeseries:', error);
+    res.status(500).json({ error: 'Failed to get timeseries data' });
+  }
 });
 
 // ========== AGENT API ROUTES ==========

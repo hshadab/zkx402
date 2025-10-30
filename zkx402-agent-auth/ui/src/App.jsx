@@ -6,6 +6,7 @@ import AuthorizationSimulator from './components/AuthorizationSimulator'
 import ProofVisualization from './components/ProofVisualization'
 import PerformanceMetrics from './components/PerformanceMetrics'
 import ApiDocs from './components/ApiDocs'
+import Analytics from './components/Analytics'
 
 function App() {
   const [selectedModel, setSelectedModel] = useState('simple_threshold')
@@ -56,6 +57,16 @@ function App() {
             }`}
           >
             API Documentation
+          </button>
+          <button
+            onClick={() => setActiveTab('analytics')}
+            className={`px-4 sm:px-6 py-3 font-semibold transition-all whitespace-nowrap text-sm sm:text-base ${
+              activeTab === 'analytics'
+                ? 'text-accent-green border-b-2 border-accent-green'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Analytics
           </button>
         </div>
 
@@ -125,6 +136,13 @@ function App() {
             <ApiDocs />
           </div>
         )}
+
+        {/* Analytics Tab */}
+        {activeTab === 'analytics' && (
+          <div id="analytics">
+            <Analytics />
+          </div>
+        )}
       </main>
 
       <footer className="border-t border-dark-700 mt-8 sm:mt-16 py-6 sm:py-8">
@@ -134,6 +152,13 @@ function App() {
             <a href="https://github.com/hshadab/zkx402" className="text-accent-green hover:underline">
               View on GitHub
             </a>
+            <span className="mx-2">•</span>
+            <button
+              onClick={() => setActiveTab('analytics')}
+              className="text-accent-green hover:underline cursor-pointer"
+            >
+              Analytics
+            </button>
           </p>
         </div>
       </footer>
