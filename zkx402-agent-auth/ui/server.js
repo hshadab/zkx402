@@ -14,6 +14,7 @@ const {
 } = require('./x402-middleware');
 
 const { getPaymentInfo, formatPrice } = require('./base-payment');
+const { registerAgentRoutes, setBaseUrl } = require('./agent-api-routes');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -75,22 +76,69 @@ app.get('/.well-known/x402', (req, res) => {
   const paymentInfo = getPaymentInfo();
 
   res.json({
-    service: 'zkX402 Agent Authorization - Production Ready ✅',
-    version: '1.2.0',
+    service: 'zkX402 Privacy-Preserving Authorization for AI Agents',
+    version: '1.3.0',
     status: 'production',
     lastUpdated: '2025-10-29',
-    description: 'Verifiable agent authorization using JOLT Atlas zkML proofs with Base USDC payments',
+    description: 'Privacy-preserving authorization using JOLT Atlas zkML proofs with Base USDC payments. Prove authorization without revealing sensitive data.',
     x402Version: 1,
+
+    // Agent-friendly capabilities
+    capabilities: {
+      zkml_proofs: true,
+      max_model_params: 1024,
+      max_operations: 100,
+      supported_input_types: ['int8', 'int16', 'int32', 'float32'],
+      proof_time_range: '0.5s - 9s',
+      supported_onnx_ops: ['Gather', 'Greater', 'Less', 'GreaterOrEqual', 'LessOrEqual', 'Div', 'Cast', 'Slice', 'Identity', 'Add', 'Sub', 'Mul', 'Clip', 'MatMul'],
+      custom_model_upload: false,  // Future feature
+      policy_composition: false     // Future feature
+    },
+
+    // Payment details
+    pricing: {
+      currency: 'USDC',
+      network: 'base',
+      chainId: paymentInfo.network.chainId,
+      wallet: paymentInfo.paymentWallet,
+      explorer: paymentInfo.network.explorer,
+      tokenAddress: paymentInfo.token.address
+    },
+
+    // API endpoints for agents
+    endpoints: {
+      list_policies: `${BASE_URL}/api/policies`,
+      get_policy_schema: `${BASE_URL}/api/policies/:id/schema`,
+      generate_proof: `${BASE_URL}/api/generate-proof`,
+      verify_proof: `${BASE_URL}/x402/verify-proof`,
+      authorize: `${BASE_URL}/x402/authorize/:modelId`,
+      discovery: `${BASE_URL}/.well-known/x402`,
+      health: `${BASE_URL}/health`
+    },
+
+    // Pre-built policies (agent-readable)
+    pre_built_policies: Object.keys(CURATED_MODELS).map(id => ({
+      id,
+      name: CURATED_MODELS[id].name,
+      description: CURATED_MODELS[id].description,
+      category: CURATED_MODELS[id].category,
+      use_case: CURATED_MODELS[id].useCase,
+      price_usdc: formatPrice(CURATED_MODELS[id].price),
+      price_atomic: CURATED_MODELS[id].price,
+      avg_proof_time: CURATED_MODELS[id].proofTime,
+      operations: CURATED_MODELS[id].operations,
+      complexity: CURATED_MODELS[id].operations <= 10 ? 'simple' : CURATED_MODELS[id].operations <= 30 ? 'medium' : 'advanced',
+      inputs: CURATED_MODELS[id].inputs,
+      endpoint: `${BASE_URL}/x402/authorize/${id}`,
+      schema_url: `${BASE_URL}/api/policies/${id}/schema`
+    })),
+
+    // Backward compatibility
     verifiedModels: 14,
     modelBreakdown: {
       production: 10,
       test: 4
     },
-    criticalFixes: [
-      'Gather heap address collision fixed',
-      'Two-pass input allocation implemented',
-      'Constant index Gather addressing corrected'
-    ],
     payment: {
       enabled: true,
       blockchain: paymentInfo.network.name,
@@ -101,41 +149,12 @@ app.get('/.well-known/x402', (req, res) => {
       explorer: paymentInfo.network.explorer,
       instructions: paymentInfo.instructions
     },
-    endpoints: {
-      discovery: `${BASE_URL}/.well-known/x402`,
-      models: `${BASE_URL}/x402/models`,
-      authorize: `${BASE_URL}/x402/authorize/:modelId`,
-      verifyProof: `${BASE_URL}/x402/verify-proof`,
-      generateProof: `${BASE_URL}/api/generate-proof`,
-      paymentInfo: `${BASE_URL}/x402/payment-info`,
-      facilitator: {
-        supported: `${BASE_URL}/x402/supported`,
-        verify: `${BASE_URL}/x402/verify`
-      }
-    },
-    schemes: [
-      {
-        scheme: 'zkml-jolt',
-        network: 'base-mainnet',
-        description: 'Zero-knowledge machine learning proofs using JOLT Atlas with Base USDC payments',
-        proofType: 'onnx-inference',
-        paymentMethod: 'USDC on Base L2',
-        operations: 'Gather, Greater, Less, GreaterOrEqual, LessOrEqual, Div, Cast, Slice, Identity, Add, Sub, Mul'
-      }
-    ],
-    models: Object.keys(CURATED_MODELS).map(id => ({
-      id,
-      name: CURATED_MODELS[id].name,
-      category: CURATED_MODELS[id].category,
-      description: CURATED_MODELS[id].description,
-      price: CURATED_MODELS[id].price,
-      priceUSDC: formatPrice(CURATED_MODELS[id].price),
-      inputs: CURATED_MODELS[id].inputs,
-      operations: CURATED_MODELS[id].operations,
-      proofTime: CURATED_MODELS[id].proofTime,
-      authorizeEndpoint: `${BASE_URL}/x402/authorize/${id}`
-    })),
-    documentation: 'https://github.com/hshadab/zkx402'
+
+    documentation: 'https://github.com/hshadab/zkx402',
+    sdk: {
+      python: 'https://github.com/hshadab/zkx402-sdk-python',  // Future
+      javascript: 'https://github.com/hshadab/zkx402-sdk-js'    // Future
+    }
   });
 });
 
@@ -495,6 +514,12 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+// ========== AGENT API ROUTES ==========
+// Register agent-friendly API endpoints
+// IMPORTANT: Must come BEFORE catch-all routes
+setBaseUrl(BASE_URL);
+registerAgentRoutes(app);
 
 // ========== SERVE REACT UI (PRODUCTION) ==========
 // Serve static files from Vite build output

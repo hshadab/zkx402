@@ -1,16 +1,19 @@
 import React, { useState } from 'react'
-import { CURATED_MODELS, MODEL_CATEGORIES, getAllCategories } from '../utils/curatedModels'
+import { getFeaturedModels, MODEL_CATEGORIES, getAllCategories } from '../utils/curatedModels'
 
 export default function ModelSelector({ selectedModel, onModelChange }) {
   const [selectedCategory, setSelectedCategory] = useState('All')
 
+  // Use featured models only (4 advanced models)
+  const FEATURED_MODELS = getFeaturedModels()
+
   const categories = ['All', ...getAllCategories()]
 
   const filteredModels = selectedCategory === 'All'
-    ? CURATED_MODELS
-    : CURATED_MODELS.filter(m => m.category === selectedCategory)
+    ? FEATURED_MODELS
+    : FEATURED_MODELS.filter(m => m.category === selectedCategory)
 
-  const getSelectedModel = () => CURATED_MODELS.find(m => m.id === selectedModel)
+  const getSelectedModel = () => FEATURED_MODELS.find(m => m.id === selectedModel)
   const selected = getSelectedModel()
 
   return (
@@ -18,7 +21,7 @@ export default function ModelSelector({ selectedModel, onModelChange }) {
       <div className="card-header">
         <h2 className="text-xl font-bold">Select Agent Model to Verify</h2>
         <p className="text-sm text-gray-400 mt-1">
-          Choose from 14 production-ready models for x402 agent payment authorization
+          Choose from our 4 advanced zkML authorization policies
         </p>
       </div>
 
@@ -36,7 +39,7 @@ export default function ModelSelector({ selectedModel, onModelChange }) {
           >
             {cat === 'All' ? 'All Models' : cat}
             <span className="ml-2 text-xs opacity-70">
-              ({cat === 'All' ? CURATED_MODELS.length : CURATED_MODELS.filter(m => m.category === cat).length})
+              ({cat === 'All' ? FEATURED_MODELS.length : FEATURED_MODELS.filter(m => m.category === cat).length})
             </span>
           </button>
         ))}

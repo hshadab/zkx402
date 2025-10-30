@@ -27,6 +27,8 @@ export const CURATED_MODELS = [
     proofTime: '~2-3s',
     color: 'accent-green',
     supported: true,
+    featured: false,  // Trivial if-then logic
+    production: true,  // Available in API but not featured
     examples: [
       { amount: '5000', balance: '10000', expected: 'approved', desc: 'Sufficient balance' },
       { amount: '15000', balance: '10000', expected: 'denied', desc: 'Insufficient balance' }
@@ -43,6 +45,8 @@ export const CURATED_MODELS = [
     proofTime: '~7s',
     color: 'accent-green',
     supported: true,  // ✅ Working after Gather fix (2025-10-29)
+    featured: true,   // Has actual computation (multiplication + division)
+    production: true,
     examples: [
       { amount: '5000', balance: '100000', max_percentage: '10', expected: 'approved', desc: '5% of balance (within 10%)' },
       { amount: '15000', balance: '100000', max_percentage: '10', expected: 'denied', desc: '15% of balance (exceeds 10%)' }
@@ -59,6 +63,8 @@ export const CURATED_MODELS = [
     proofTime: '~2-3s',
     color: 'accent-green',
     supported: true,
+    featured: false,  // Trivial comparison
+    production: true,
     examples: [
       { vendor_trust: '75', min_trust: '50', expected: 'approved', desc: 'High trust vendor' },
       { vendor_trust: '30', min_trust: '50', expected: 'denied', desc: 'Low trust vendor' }
@@ -77,6 +83,8 @@ export const CURATED_MODELS = [
     proofTime: '~2-3s',
     color: 'accent-blue',
     supported: true,
+    featured: false,  // Simple addition + comparison
+    production: true,
     examples: [
       { amount: '5000', spent_1h: '10000', limit_1h: '20000', expected: 'approved', desc: 'Within hourly limit' },
       { amount: '15000', spent_1h: '10000', limit_1h: '20000', expected: 'denied', desc: 'Exceeds hourly limit' }
@@ -93,6 +101,8 @@ export const CURATED_MODELS = [
     proofTime: '~2-3s',
     color: 'accent-blue',
     supported: true,
+    featured: false,  // Duplicate of velocity_1h
+    production: true,
     examples: [
       { amount: '5000', spent_24h: '20000', limit_24h: '50000', expected: 'approved', desc: 'Within daily limit' },
       { amount: '40000', spent_24h: '20000', limit_24h: '50000', expected: 'denied', desc: 'Exceeds daily limit' }
@@ -109,6 +119,8 @@ export const CURATED_MODELS = [
     proofTime: '~2-3s',
     color: 'accent-blue',
     supported: true,
+    featured: false,  // Duplicate of velocity checks
+    production: true,
     examples: [
       { amount: '10000', daily_spent: '5000', daily_cap: '20000', expected: 'approved', desc: 'Within daily cap' },
       { amount: '20000', daily_spent: '5000', daily_cap: '20000', expected: 'denied', desc: 'Exceeds daily cap' }
@@ -127,6 +139,8 @@ export const CURATED_MODELS = [
     proofTime: '~2-3s',
     color: 'accent-purple',
     supported: true,
+    featured: false,  // Trivial comparison
+    production: true,
     examples: [
       { age: '25', min_age: '21', expected: 'approved', desc: 'Adult over 21' },
       { age: '18', min_age: '21', expected: 'denied', desc: 'Under age limit' }
@@ -145,6 +159,8 @@ export const CURATED_MODELS = [
     proofTime: '~2-3s',
     color: 'accent-orange',
     supported: true,
+    featured: true,   // ⭐ Combines multiple checks - shows composition
+    production: true,
     examples: [
       {
         amount: '5000',
@@ -179,6 +195,8 @@ export const CURATED_MODELS = [
     proofTime: '9.3s',
     color: 'accent-orange',
     supported: true,  // ✅ Working - Verified 72 operations (2025-10-29)
+    featured: true,   // ⭐ 72 ops - weighted scoring model, real computation
+    production: true,
     examples: [
       {
         amount: '5000',
@@ -209,6 +227,8 @@ export const CURATED_MODELS = [
     proofTime: '~8s',
     color: 'accent-orange',
     supported: true,  // ✅ Working after Gather fix (2025-10-29)
+    featured: true,   // ⭐ 47 ops - ACTUAL NEURAL NETWORK - killer feature!
+    production: true,
     examples: [
       {
         amount: '5000',
@@ -243,6 +263,8 @@ export const CURATED_MODELS = [
     proofTime: '~4s',
     color: 'accent-gray',
     supported: true,
+    featured: false,  // Internal testing only
+    production: false,  // Don't show in UI
     examples: [
       { value_a: '5', value_b: '10', expected: 'true', desc: '5 < 10 = true' },
       { value_a: '10', value_b: '5', expected: 'false', desc: '10 < 5 = false' }
@@ -259,6 +281,8 @@ export const CURATED_MODELS = [
     proofTime: '~4s',
     color: 'accent-gray',
     supported: true,
+    featured: false,  // Internal testing only
+    production: false,  // Don't show in UI
     examples: [
       { value: '42', expected: '42', desc: 'Identity(42) = 42' },
       { value: '100', expected: '100', desc: 'Identity(100) = 100' }
@@ -275,6 +299,8 @@ export const CURATED_MODELS = [
     proofTime: '~4s',
     color: 'accent-gray',
     supported: true,
+    featured: false,  // Internal testing only
+    production: false,  // Don't show in UI
     examples: [
       { value: '5', min: '0', max: '10', expected: '5', desc: 'Clip(5, 0, 10) = 5' },
       { value: '15', min: '0', max: '10', expected: '10', desc: 'Clip(15, 0, 10) = 10' }
@@ -291,6 +317,8 @@ export const CURATED_MODELS = [
     proofTime: '~4.5s',
     color: 'accent-gray',
     supported: true,
+    featured: false,  // Internal testing only
+    production: false,  // Don't show in UI
     examples: [
       { start: '0', end: '3', expected: '[0,1,2]', desc: 'Slice tensor [0:3]' },
       { start: '2', end: '5', expected: '[2,3,4]', desc: 'Slice tensor [2:5]' }
@@ -490,6 +518,20 @@ export const MODEL_CATEGORIES = {
  */
 export function getSupportedModels() {
   return CURATED_MODELS.filter(m => m.supported !== false)
+}
+
+/**
+ * Get featured models (advanced, complex ones for UI)
+ */
+export function getFeaturedModels() {
+  return CURATED_MODELS.filter(m => m.featured === true)
+}
+
+/**
+ * Get production models (excludes test models)
+ */
+export function getProductionModels() {
+  return CURATED_MODELS.filter(m => m.production !== false)
 }
 
 /**

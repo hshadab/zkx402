@@ -83,6 +83,24 @@ We've enhanced the [JOLT Atlas](https://github.com/ICME-Lab/jolt-atlas) zero-kno
 
 We provide **14 curated ONNX authorization models** (10 production + 4 test) covering the most common use cases. These models are fully tested, validated, and ready to use with JOLT Atlas proofs.
 
+### Model Tiers: Featured vs All
+
+To highlight zkX402's advanced zkML capabilities, we organize models into tiers:
+
+**Featured Models (4)** - Advanced zkML showcased in the UI:
+- `percentage_limit` - Real arithmetic computation (multiplication + division)
+- `multi_factor` - Multi-check composition (30 operations)
+- `composite_scoring` - Weighted scoring model (72 operations)
+- `risk_neural` - Actual neural network for risk scoring (47 operations)
+
+**Simple Models (6)** - Basic comparisons, available via API:
+- `simple_threshold`, `vendor_trust`, `velocity_1h`, `velocity_24h`, `daily_limit`, `age_gate`
+
+**Test Models (4)** - Internal testing only:
+- `test_less`, `test_identity`, `test_clip`, `test_slice`
+
+**Why This Matters**: The UI displays only the 4 featured models to showcase zkX402 as a serious zkML solution, not just a comparison service. All 14 models remain available via API for programmatic use by autonomous agents.
+
 ### What Are These Models?
 
 Think of these as **pre-built authorization rules that agents can prove they've followed**—without revealing the private data involved. For example:
@@ -166,6 +184,191 @@ See detailed documentation:
 - [CATALOG.md](policy-examples/onnx/curated/CATALOG.md) - Complete model specifications
 - [TEST_RESULTS.md](policy-examples/onnx/curated/TEST_RESULTS.md) - Test results and benchmarks
 - [JOLT_ENHANCEMENT_USAGE.md](policy-examples/onnx/curated/JOLT_ENHANCEMENT_USAGE.md) - Which enhancements each model uses
+
+## Agent API for Autonomous x402 Agents
+
+**New in v1.3.0**: Machine-readable API endpoints designed specifically for autonomous agents to discover, evaluate, and integrate zkX402 authorization policies programmatically.
+
+### Why Agent APIs?
+
+Autonomous x402 agents need to:
+1. **Discover** available authorization policies without human intervention
+2. **Understand** policy requirements and schemas programmatically
+3. **Generate** zero-knowledge proofs of authorization compliance
+4. **Integrate** authorization checks into their workflows
+
+Our agent API provides all of this through three standardized endpoints.
+
+### Quick Example: Agent Discovery & Proof
+
+```python
+import requests
+
+# 1. Service discovery (x402 protocol compliance)
+discovery = requests.get("http://localhost:3001/.well-known/x402").json()
+print(f"Service: {discovery['service']}")
+print(f"Available policies: {len(discovery['pre_built_policies'])}")
+
+# 2. List all policies with metadata
+policies = requests.get("http://localhost:3001/api/policies").json()
+
+# 3. Select policy by use case
+policy = next(p for p in policies['policies'] if p['id'] == 'simple_threshold')
+print(f"Using: {policy['name']} - {policy['description']}")
+
+# 4. Generate zero-knowledge proof
+proof = requests.post("http://localhost:3001/api/generate-proof", json={
+    "model": "simple_threshold",
+    "inputs": {
+        "amount": "5000",
+        "balance": "10000"
+    }
+}).json()
+
+if proof['approved']:
+    print(f"✓ Authorization approved (proof: {proof['proof'][:32]}...)")
+    print(f"  Proving time: {proof['proving_time']}")
+    print(f"  Verified: {proof['verification']['verified']}")
+```
+
+### API Endpoints
+
+#### 1. **Service Discovery** - `GET /.well-known/x402`
+
+Standard x402 protocol endpoint providing:
+- Service capabilities (max model size, supported operations, proof time ranges)
+- Pricing information (USDC on Base L2)
+- Complete catalog of 14 pre-built policies
+- All available API endpoints
+
+**Returns**: Service metadata, capabilities, pricing, and policy catalog
+
+#### 2. **Policy Listing** - `GET /api/policies`
+
+Machine-readable catalog of all 14 authorization policies with:
+- Policy metadata (ID, name, description, category, complexity)
+- Input/output schemas with type information
+- Example requests for approve/deny scenarios
+- Performance metrics (operations, avg proof time)
+- Direct endpoint URLs for each policy
+
+**Returns**: Array of policy objects with complete metadata
+
+#### 3. **Policy Schema** - `GET /api/policies/{id}/schema`
+
+Detailed schema for a specific policy including:
+- Complete input specifications with validation rules
+- Output format and value meanings
+- Usage examples with expected outputs
+- Pricing and performance details
+- Request format templates
+
+**Returns**: Detailed policy schema and usage information
+
+### Integration Patterns
+
+#### Pattern 1: Discovery-Driven Integration
+```python
+# Discover → List → Select → Generate Proof
+discovery = requests.get("/.well-known/x402").json()
+policies = requests.get(discovery['endpoints']['list_policies']).json()
+policy = policies['policies'][0]
+proof = requests.post(discovery['endpoints']['generate_proof'], json={
+    "model": policy['id'],
+    "inputs": policy['example']['approve']
+}).json()
+```
+
+#### Pattern 2: Category-Based Selection
+```javascript
+// Filter policies by category and complexity
+const { policies } = await fetch('/api/policies').then(r => r.json());
+const financialPolicies = policies.filter(p => p.category === 'financial');
+const simplePolicy = financialPolicies.find(p => p.complexity === 'simple');
+```
+
+#### Pattern 3: Multi-Policy Evaluation
+```python
+# Evaluate multiple policies for different risk levels
+import asyncio
+results = await asyncio.gather(*[
+    generate_proof(session, policy['id'], transaction)
+    for policy in policies['policies']
+    if policy['category'] in ['financial', 'multi-factor']
+])
+```
+
+### Technical Constraints
+
+**JOLT Atlas Limitations** (these are hard limits):
+- Max tensor size: **1,024 elements**
+- Max operations: **~100 per model**
+- Integer-only operations (floats converted to scaled integers)
+- Supported input types: `int8`, `int16`, `int32`, `float32`
+
+**Proof Generation Times**:
+- Simple policies (2-10 ops): **0.5-1.5s**
+- Medium policies (11-30 ops): **1.5-4s**
+- Complex policies (31-100 ops): **4-9s**
+
+**Pricing** (Base L2 USDC):
+- Simple: **$0.0001-0.0005** per proof
+- Medium: **$0.0005-0.002** per proof
+- Complex: **$0.002-0.01** per proof
+
+### Complete Documentation
+
+- **[AGENT_INTEGRATION.md](AGENT_INTEGRATION.md)** - Comprehensive integration guide
+  - Step-by-step agent workflow
+  - Complete code examples (Python, JavaScript)
+  - All 14 policy descriptions
+  - Error handling and best practices
+
+- **[API_REFERENCE.md](API_REFERENCE.md)** - Detailed API reference
+  - Complete endpoint specifications
+  - Request/response formats
+  - Data models (TypeScript interfaces)
+  - Error codes and handling
+
+### Example Use Cases
+
+**Financial Authorization**:
+```python
+# Approve transaction only if sufficient balance
+proof = generate_proof("simple_threshold", {"amount": 5000, "balance": 10000})
+# Returns: approved=True, output=1, proof=0x...
+```
+
+**Velocity Limiting**:
+```python
+# Enforce hourly spending cap
+proof = generate_proof("velocity_1h", {
+    "amount": 5000,
+    "spent_1h": 10000,
+    "limit_1h": 20000
+})
+```
+
+**Trust-Based Authorization**:
+```python
+# Require minimum vendor reputation
+proof = generate_proof("vendor_trust", {
+    "vendor_trust": 75,
+    "min_trust": 50
+})
+```
+
+**Neural Network Risk Scoring**:
+```python
+# ML-based fraud detection
+proof = generate_proof("risk_neural", {
+    "amount": 5000,
+    "balance": 100000,
+    "velocity_1h": 5000,
+    "velocity_24h": 20000,
+    "vendor_trust": 75
+})
+```
 
 ## Quick Start
 
