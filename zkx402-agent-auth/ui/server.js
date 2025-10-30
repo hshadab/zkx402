@@ -15,6 +15,7 @@ const {
 
 const { getPaymentInfo, formatPrice } = require('./base-payment');
 const { registerAgentRoutes, setBaseUrl } = require('./agent-api-routes');
+const webhookManager = require('./webhook-manager');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -438,7 +439,7 @@ function generateJoltProof(modelId, inputs) {
 
 app.post('/api/generate-proof', uiProofLimiter, async (req, res) => {
   try {
-    const { model: modelId, inputs } = req.body;
+    const { model: modelId, inputs, webhook_id } = req.body;
 
     if (!modelId) {
       return res.status(400).json({ error: 'Model ID required' });
@@ -459,14 +460,32 @@ app.post('/api/generate-proof', uiProofLimiter, async (req, res) => {
       });
     }
 
+    // If webhook_id provided, validate it exists
+    if (webhook_id) {
+      const webhook = webhookManager.getWebhook(webhook_id);
+      if (!webhook) {
+        return res.status(400).json({
+          error: 'Webhook not found',
+          webhook_id
+        });
+      }
+    }
+
+    // Create proof request for webhook tracking (if webhook_id provided)
+    const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    if (webhook_id) {
+      webhookManager.createProofRequest(requestId, webhook_id, modelId, inputs);
+    }
+
     const startTime = Date.now();
     const proofData = await generateJoltProof(modelId, inputs);
     const proofTime = Date.now() - startTime;
 
-    res.json({
+    const result = {
       ...proofData,
       proofTime,
       inputs,
+      request_id: requestId,
       x402Payment: {
         header: encodePaymentResponse({
           x402Version: 1,
@@ -478,7 +497,14 @@ app.post('/api/generate-proof', uiProofLimiter, async (req, res) => {
           }
         })
       }
-    });
+    };
+
+    // Trigger webhook if configured
+    if (webhook_id) {
+      await webhookManager.completeProofRequest(requestId, result);
+    }
+
+    res.json(result);
 
   } catch (error) {
     console.error('[API] Proof generation failed:', error);

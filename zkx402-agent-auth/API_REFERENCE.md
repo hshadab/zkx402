@@ -10,8 +10,9 @@ Complete API reference for zkX402 privacy-preserving authorization service.
 1. [Discovery Endpoints](#discovery-endpoints)
 2. [Policy Endpoints](#policy-endpoints)
 3. [Proof Generation](#proof-generation)
-4. [Data Models](#data-models)
-5. [Error Responses](#error-responses)
+4. [Webhook Endpoints](#webhook-endpoints)
+5. [Data Models](#data-models)
+6. [Error Responses](#error-responses)
 
 ---
 
@@ -501,6 +502,190 @@ Content-Type: application/json
 - `402 Payment Required` - Insufficient payment
 - `404 Not Found` - Model ID does not exist
 - `500 Internal Server Error` - Proof generation failed
+
+---
+
+## Webhook Endpoints
+
+Webhooks allow agents to receive async notifications when proofs complete, enabling non-blocking workflows for long-running proof generation.
+
+### POST `/api/webhooks`
+
+Register a new webhook for proof completion notifications.
+
+**Request:**
+```bash
+POST /api/webhooks
+Content-Type: application/json
+```
+
+```json
+{
+  "callback_url": "https://your-agent.com/webhook/proof-complete",
+  "metadata": {
+    "agent_id": "agent_123",
+    "task_id": "task_456"
+  }
+}
+```
+
+**Request Fields:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `callback_url` | string | ✓ | Your webhook endpoint URL |
+| `metadata` | object | | Optional metadata to track webhook context |
+
+**Response:** `201 Created`
+```json
+{
+  "webhook_id": "wh_1234567890_abc123",
+  "callback_url": "https://your-agent.com/webhook/proof-complete",
+  "metadata": {
+    "agent_id": "agent_123",
+    "task_id": "task_456"
+  },
+  "created_at": "2025-10-29T12:00:00.000Z",
+  "status": "active"
+}
+```
+
+**Error Responses:**
+- `400 Bad Request` - Missing callback_url
+
+---
+
+### GET `/api/webhooks/:id`
+
+Get details about a specific webhook.
+
+**Request:**
+```bash
+GET /api/webhooks/wh_1234567890_abc123
+```
+
+**Response:** `200 OK`
+```json
+{
+  "webhook_id": "wh_1234567890_abc123",
+  "callback_url": "https://your-agent.com/webhook/proof-complete",
+  "metadata": {
+    "agent_id": "agent_123",
+    "task_id": "task_456"
+  },
+  "created_at": "2025-10-29T12:00:00.000Z",
+  "deliveries": 5,
+  "recent_deliveries": [
+    {
+      "id": "delivery_1234567890",
+      "timestamp": "2025-10-29T12:00:05.000Z",
+      "status": "delivered",
+      "response_status": 200
+    }
+  ]
+}
+```
+
+**Error Responses:**
+- `404 Not Found` - Webhook not found
+
+---
+
+### DELETE `/api/webhooks/:id`
+
+Delete a webhook.
+
+**Request:**
+```bash
+DELETE /api/webhooks/wh_1234567890_abc123
+```
+
+**Response:** `200 OK`
+```json
+{
+  "message": "Webhook deleted successfully",
+  "webhook_id": "wh_1234567890_abc123"
+}
+```
+
+**Error Responses:**
+- `404 Not Found` - Webhook not found
+
+---
+
+### GET `/api/webhooks`
+
+List all registered webhooks.
+
+**Request:**
+```bash
+GET /api/webhooks
+```
+
+**Response:** `200 OK`
+```json
+{
+  "webhooks": [
+    {
+      "webhook_id": "wh_1234567890_abc123",
+      "callback_url": "https://your-agent.com/webhook/proof-complete",
+      "created_at": "2025-10-29T12:00:00.000Z",
+      "deliveries": 5
+    }
+  ]
+}
+```
+
+---
+
+### Webhook Payload Format
+
+When a proof completes, your webhook endpoint will receive a POST request:
+
+**Headers:**
+```
+Content-Type: application/json
+X-zkX402-Event: proof.completed
+X-zkX402-Webhook-ID: wh_1234567890_abc123
+```
+
+**Body:**
+```json
+{
+  "event": "proof.completed",
+  "webhook_id": "wh_1234567890_abc123",
+  "timestamp": "2025-10-29T12:00:05.000Z",
+  "data": {
+    "request_id": "req_1234567890_xyz789",
+    "policy_id": "simple_threshold",
+    "inputs": {
+      "amount": "5000",
+      "balance": "10000"
+    },
+    "approved": true,
+    "output": 1,
+    "verification": {
+      "verified": true
+    },
+    "proofTime": 732,
+    "modelName": "Simple Threshold Check"
+  }
+}
+```
+
+**Webhook Implementation Requirements:**
+
+1. Your webhook endpoint must accept POST requests
+2. Return a 2xx status code to acknowledge receipt
+3. Respond within 10 seconds (timeout)
+4. Handle retries gracefully (idempotent)
+
+**Security Recommendations:**
+
+- Use HTTPS for webhook URLs
+- Verify the `X-zkX402-Webhook-ID` header matches your registered webhook
+- Implement webhook signature verification (future feature)
+- Validate the timestamp to prevent replay attacks
 
 ---
 

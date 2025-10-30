@@ -5,6 +5,7 @@
 
 const { CURATED_MODELS } = require('./x402-middleware');
 const { formatPrice } = require('./base-payment');
+const webhookManager = require('./webhook-manager');
 
 // Base URL (will be passed from server.js)
 let BASE_URL = 'http://localhost:3001';
@@ -316,6 +317,71 @@ function registerAgentRoutes(app) {
         policy_id: id
       });
     }
+  });
+
+  // ========== WEBHOOK API: REGISTER WEBHOOKS ==========
+  app.post('/api/webhooks', (req, res) => {
+    const { callback_url, metadata } = req.body;
+
+    if (!callback_url) {
+      return res.status(400).json({ error: 'callback_url is required' });
+    }
+
+    const webhookId = `wh_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const webhook = webhookManager.registerWebhook(webhookId, callback_url, metadata);
+
+    res.status(201).json({
+      webhook_id: webhook.id,
+      callback_url: webhook.callbackUrl,
+      metadata: webhook.metadata,
+      created_at: webhook.createdAt,
+      status: 'active',
+    });
+  });
+
+  // ========== WEBHOOK API: GET WEBHOOK ==========
+  app.get('/api/webhooks/:id', (req, res) => {
+    const { id } = req.params;
+    const webhook = webhookManager.getWebhook(id);
+
+    if (!webhook) {
+      return res.status(404).json({ error: 'Webhook not found' });
+    }
+
+    res.json({
+      webhook_id: webhook.id,
+      callback_url: webhook.callbackUrl,
+      metadata: webhook.metadata,
+      created_at: webhook.createdAt,
+      deliveries: webhook.deliveries.length,
+      recent_deliveries: webhook.deliveries.slice(-5),
+    });
+  });
+
+  // ========== WEBHOOK API: DELETE WEBHOOK ==========
+  app.delete('/api/webhooks/:id', (req, res) => {
+    const { id } = req.params;
+    const deleted = webhookManager.deleteWebhook(id);
+
+    if (!deleted) {
+      return res.status(404).json({ error: 'Webhook not found' });
+    }
+
+    res.json({ message: 'Webhook deleted successfully', webhook_id: id });
+  });
+
+  // ========== WEBHOOK API: LIST WEBHOOKS ==========
+  app.get('/api/webhooks', (req, res) => {
+    const webhooks = webhookManager.listWebhooks();
+
+    res.json({
+      webhooks: webhooks.map(w => ({
+        webhook_id: w.id,
+        callback_url: w.callbackUrl,
+        created_at: w.createdAt,
+        deliveries: w.deliveries.length,
+      })),
+    });
   });
 }
 

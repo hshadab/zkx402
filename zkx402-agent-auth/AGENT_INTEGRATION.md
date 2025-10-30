@@ -114,6 +114,111 @@ curl -X POST https://your-server.com/api/generate-proof \
 }
 ```
 
+### 6. Async Proof Generation with Webhooks
+
+For long-running proof generation, agents can register webhooks to receive async notifications when proofs complete.
+
+#### Step 1: Register a Webhook
+
+```bash
+curl -X POST https://your-server.com/api/webhooks \
+  -H "Content-Type: application/json" \
+  -d '{
+    "callback_url": "https://your-agent.com/webhook/proof-complete",
+    "metadata": {
+      "agent_id": "agent_123",
+      "task_id": "task_456"
+    }
+  }'
+```
+
+**Response:**
+```json
+{
+  "webhook_id": "wh_1234567890_abc123",
+  "callback_url": "https://your-agent.com/webhook/proof-complete",
+  "metadata": {
+    "agent_id": "agent_123",
+    "task_id": "task_456"
+  },
+  "created_at": "2025-10-29T12:00:00.000Z",
+  "status": "active"
+}
+```
+
+#### Step 2: Generate Proof with Webhook
+
+```bash
+curl -X POST https://your-server.com/api/generate-proof \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "simple_threshold",
+    "inputs": {
+      "amount": "5000",
+      "balance": "10000"
+    },
+    "webhook_id": "wh_1234567890_abc123"
+  }'
+```
+
+The proof is generated synchronously, but upon completion, the webhook is triggered automatically.
+
+#### Step 3: Receive Webhook Notification
+
+Your webhook endpoint will receive a POST request with:
+
+```json
+{
+  "event": "proof.completed",
+  "webhook_id": "wh_1234567890_abc123",
+  "timestamp": "2025-10-29T12:00:05.000Z",
+  "data": {
+    "request_id": "req_1234567890_xyz789",
+    "policy_id": "simple_threshold",
+    "inputs": {
+      "amount": "5000",
+      "balance": "10000"
+    },
+    "approved": true,
+    "output": 1,
+    "verification": {
+      "verified": true
+    },
+    "proofTime": 732,
+    "modelName": "Simple Threshold Check"
+  }
+}
+```
+
+**Webhook Headers:**
+- `Content-Type: application/json`
+- `X-zkX402-Event: proof.completed`
+- `X-zkX402-Webhook-ID: wh_1234567890_abc123`
+
+#### Managing Webhooks
+
+**Get webhook details:**
+```bash
+GET /api/webhooks/{webhook_id}
+```
+
+**List all webhooks:**
+```bash
+GET /api/webhooks
+```
+
+**Delete webhook:**
+```bash
+DELETE /api/webhooks/{webhook_id}
+```
+
+#### Benefits of Webhooks
+
+- **Non-blocking**: Your agent doesn't need to wait for proof generation
+- **Reliable**: Webhook delivery is tracked and logged
+- **Flexible**: Attach custom metadata to track context
+- **Scalable**: Generate multiple proofs in parallel without polling
+
 ## Available Authorization Policies
 
 ### Policy Tiers
