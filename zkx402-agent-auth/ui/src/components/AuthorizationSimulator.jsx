@@ -37,10 +37,25 @@ export default function AuthorizationSimulator({ modelType, onProofGenerated, is
     try {
       const startTime = Date.now()
 
-      // Call backend API
+      // Convert dollar inputs to cents for the API
+      // Fields that represent money need to be multiplied by 100
+      const monetaryFields = ['amount', 'balance', 'spent_1h', 'limit_1h', 'spent_24h', 'limit_24h', 'daily_spent', 'daily_cap', 'velocity_1h', 'velocity_24h']
+      const convertedInputs = {}
+
+      model.inputs.forEach(inputName => {
+        if (monetaryFields.includes(inputName)) {
+          // Convert dollars to cents: multiply by 100 and round to integer
+          convertedInputs[inputName] = Math.round(parseFloat(inputs[inputName]) * 100).toString()
+        } else {
+          // Non-monetary fields pass through unchanged
+          convertedInputs[inputName] = inputs[inputName]
+        }
+      })
+
+      // Call backend API with converted inputs
       const response = await axios.post('/api/generate-proof', {
         model: modelType,
-        inputs: inputs
+        inputs: convertedInputs
       })
 
       const proofTime = Date.now() - startTime
@@ -49,7 +64,7 @@ export default function AuthorizationSimulator({ modelType, onProofGenerated, is
         ...response.data,
         proofTime,
         modelType,
-        inputs
+        inputs: convertedInputs  // Store converted (cents) values for display
       })
     } catch (error) {
       console.error('Proof generation failed:', error)
