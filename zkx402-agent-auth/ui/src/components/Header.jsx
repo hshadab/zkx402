@@ -43,10 +43,10 @@ export default function Header() {
             {/* Desktop Navigation Links */}
             <div className="hidden lg:flex items-center gap-6">
               <a
-                href="#features"
+                href="#howto"
                 className="text-sm text-gray-400 hover:text-white transition-colors"
               >
-                Features
+                How to Use
               </a>
               <a
                 href="https://www.novanet.xyz/blog/x402-zkml-internet-native-verifiable-payments"
@@ -95,11 +95,11 @@ export default function Header() {
             <div className="lg:hidden mt-4 py-4 border-t border-dark-700">
               <div className="flex flex-col gap-4">
                 <a
-                  href="#features"
+                  href="#howto"
                   onClick={() => setMobileMenuOpen(false)}
                   className="text-sm text-gray-400 hover:text-white transition-colors py-2"
                 >
-                  Features
+                  How to Use
                 </a>
                 <a
                   href="https://www.novanet.xyz/blog/x402-zkml-internet-native-verifiable-payments"

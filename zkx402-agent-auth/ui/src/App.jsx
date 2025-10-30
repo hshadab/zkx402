@@ -7,18 +7,25 @@ import ProofVisualization from './components/ProofVisualization'
 import PerformanceMetrics from './components/PerformanceMetrics'
 import ApiDocs from './components/ApiDocs'
 import Analytics from './components/Analytics'
+import HowToUse from './components/HowToUse'
 
 function App() {
-  const [selectedModel, setSelectedModel] = useState('simple_threshold')
+  const [selectedModel, setSelectedModel] = useState('percentage_limit')
   const [proofData, setProofData] = useState(null)
   const [isGenerating, setIsGenerating] = useState(false)
-  const [activeTab, setActiveTab] = useState('simulator') // 'simulator' or 'api'
+  const [activeTab, setActiveTab] = useState('howto') // 'howto', 'simulator', 'api', or 'analytics'
 
   // Handle hash-based navigation for View API button
   React.useEffect(() => {
     const handleHashChange = () => {
       if (window.location.hash === '#api') {
         setActiveTab('api')
+      } else if (window.location.hash === '#howto') {
+        setActiveTab('howto')
+      } else if (window.location.hash === '#simulator') {
+        setActiveTab('simulator')
+      } else if (window.location.hash === '#analytics') {
+        setActiveTab('analytics')
       }
     }
 
@@ -38,6 +45,16 @@ function App() {
         <FreeTierBanner />
         {/* Tab Navigation */}
         <div className="flex gap-2 sm:gap-4 mb-8 border-b border-dark-700 overflow-x-auto">
+          <button
+            onClick={() => setActiveTab('howto')}
+            className={`px-4 sm:px-6 py-3 font-semibold transition-all whitespace-nowrap text-sm sm:text-base ${
+              activeTab === 'howto'
+                ? 'text-accent-green border-b-2 border-accent-green'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            How to Use
+          </button>
           <button
             onClick={() => setActiveTab('simulator')}
             className={`px-4 sm:px-6 py-3 font-semibold transition-all whitespace-nowrap text-sm sm:text-base ${
@@ -69,6 +86,13 @@ function App() {
             Analytics
           </button>
         </div>
+
+        {/* How to Use Tab */}
+        {activeTab === 'howto' && (
+          <div id="howto">
+            <HowToUse />
+          </div>
+        )}
 
         {/* Simulator Tab */}
         {activeTab === 'simulator' && (
