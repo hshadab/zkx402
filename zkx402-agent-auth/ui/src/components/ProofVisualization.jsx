@@ -45,26 +45,102 @@ export default function ProofVisualization({ proofData }) {
         <div className="bg-dark-700 p-6 rounded-lg border border-dark-600">
           <h3 className="text-lg font-semibold mb-4">Transaction Details (Hidden from Verifier)</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 text-sm">
-            <div>
-              <p className="text-gray-400 mb-1">Amount</p>
-              <p className="text-white font-mono">${(inputs.amount / 100).toFixed(2)}</p>
-            </div>
-            <div>
-              <p className="text-gray-400 mb-1">Balance</p>
-              <p className="text-white font-mono">${(inputs.balance / 100).toFixed(2)}</p>
-            </div>
-            <div>
-              <p className="text-gray-400 mb-1">Velocity 1h</p>
-              <p className="text-white font-mono">${(inputs.velocity_1h / 100).toFixed(2)}</p>
-            </div>
-            <div>
-              <p className="text-gray-400 mb-1">Velocity 24h</p>
-              <p className="text-white font-mono">${(inputs.velocity_24h / 100).toFixed(2)}</p>
-            </div>
-            <div>
-              <p className="text-gray-400 mb-1">Trust Score</p>
-              <p className="text-white font-mono">{inputs.vendor_trust}/100</p>
-            </div>
+            {inputs.amount !== undefined && (
+              <div>
+                <p className="text-gray-400 mb-1">Amount</p>
+                <p className="text-white font-mono">${(inputs.amount / 100).toFixed(2)}</p>
+              </div>
+            )}
+            {inputs.balance !== undefined && (
+              <div>
+                <p className="text-gray-400 mb-1">Balance</p>
+                <p className="text-white font-mono">${(inputs.balance / 100).toFixed(2)}</p>
+              </div>
+            )}
+            {inputs.velocity_1h !== undefined && (
+              <div>
+                <p className="text-gray-400 mb-1">Velocity 1h</p>
+                <p className="text-white font-mono">${(inputs.velocity_1h / 100).toFixed(2)}</p>
+              </div>
+            )}
+            {inputs.velocity_24h !== undefined && (
+              <div>
+                <p className="text-gray-400 mb-1">Velocity 24h</p>
+                <p className="text-white font-mono">${(inputs.velocity_24h / 100).toFixed(2)}</p>
+              </div>
+            )}
+            {inputs.spent_1h !== undefined && (
+              <div>
+                <p className="text-gray-400 mb-1">Spent 1h</p>
+                <p className="text-white font-mono">${(inputs.spent_1h / 100).toFixed(2)}</p>
+              </div>
+            )}
+            {inputs.spent_24h !== undefined && (
+              <div>
+                <p className="text-gray-400 mb-1">Spent 24h</p>
+                <p className="text-white font-mono">${(inputs.spent_24h / 100).toFixed(2)}</p>
+              </div>
+            )}
+            {inputs.vendor_trust !== undefined && (
+              <div>
+                <p className="text-gray-400 mb-1">Trust Score</p>
+                <p className="text-white font-mono">{inputs.vendor_trust}/100</p>
+              </div>
+            )}
+            {inputs.max_percentage !== undefined && (
+              <div>
+                <p className="text-gray-400 mb-1">Max Percentage</p>
+                <p className="text-white font-mono">{inputs.max_percentage}%</p>
+              </div>
+            )}
+            {inputs.age !== undefined && (
+              <div>
+                <p className="text-gray-400 mb-1">Age</p>
+                <p className="text-white font-mono">{inputs.age} years</p>
+              </div>
+            )}
+            {inputs.min_age !== undefined && (
+              <div>
+                <p className="text-gray-400 mb-1">Min Age</p>
+                <p className="text-white font-mono">{inputs.min_age} years</p>
+              </div>
+            )}
+            {inputs.user_history !== undefined && (
+              <div>
+                <p className="text-gray-400 mb-1">User History</p>
+                <p className="text-white font-mono">{inputs.user_history}/100</p>
+              </div>
+            )}
+            {inputs.limit_1h !== undefined && (
+              <div>
+                <p className="text-gray-400 mb-1">Limit 1h</p>
+                <p className="text-white font-mono">${(inputs.limit_1h / 100).toFixed(2)}</p>
+              </div>
+            )}
+            {inputs.limit_24h !== undefined && (
+              <div>
+                <p className="text-gray-400 mb-1">Limit 24h</p>
+                <p className="text-white font-mono">${(inputs.limit_24h / 100).toFixed(2)}</p>
+              </div>
+            )}
+            {inputs.daily_spent !== undefined && (
+              <div>
+                <p className="text-gray-400 mb-1">Daily Spent</p>
+                <p className="text-white font-mono">${(inputs.daily_spent / 100).toFixed(2)}</p>
+              </div>
+            )}
+            {inputs.daily_cap !== undefined && (
+              <div>
+                <p className="text-gray-400 mb-1">Daily Cap</p>
+                <p className="text-white font-mono">${(inputs.daily_cap / 100).toFixed(2)}</p>
+              </div>
+            )}
+            {inputs.min_trust !== undefined && (
+              <div>
+                <p className="text-gray-400 mb-1">Min Trust</p>
+                <p className="text-white font-mono">{inputs.min_trust}/100</p>
+              </div>
+            )}
           </div>
         </div>
 
