@@ -17,6 +17,7 @@ const { getPaymentInfo, formatPrice } = require('./base-payment');
 const { registerAgentRoutes, setBaseUrl } = require('./agent-api-routes');
 const webhookManager = require('./webhook-manager');
 const analyticsManager = require('./analytics-manager');
+const blockchainMonitor = require('./blockchain-monitor');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -596,6 +597,17 @@ app.get('/api/analytics/timeseries', (req, res) => {
   } catch (error) {
     console.error('[Analytics] Error getting timeseries:', error);
     res.status(500).json({ error: 'Failed to get timeseries data' });
+  }
+});
+
+// Get blockchain payment stats
+app.get('/api/analytics/blockchain', async (req, res) => {
+  try {
+    const stats = await blockchainMonitor.getStats();
+    res.json(stats);
+  } catch (error) {
+    console.error('[Blockchain] Error getting blockchain stats:', error);
+    res.status(500).json({ error: 'Failed to get blockchain stats' });
   }
 });
 

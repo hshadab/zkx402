@@ -4,6 +4,7 @@ import { BarChart3, TrendingUp, DollarSign, Activity, Clock, CheckCircle, XCircl
 export default function Analytics() {
   const [stats, setStats] = useState(null);
   const [modelBreakdown, setModelBreakdown] = useState(null);
+  const [blockchainStats, setBlockchainStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -14,14 +15,19 @@ export default function Analytics() {
 
   const fetchAnalytics = async () => {
     try {
-      const [statsRes, modelsRes] = await Promise.all([
+      const [statsRes, modelsRes, blockchainRes] = await Promise.all([
         fetch('/api/analytics/stats'),
-        fetch('/api/analytics/models')
+        fetch('/api/analytics/models'),
+        fetch('/api/analytics/blockchain')
       ]);
 
       if (statsRes.ok && modelsRes.ok) {
         setStats(await statsRes.json());
         setModelBreakdown(await modelsRes.json());
+      }
+
+      if (blockchainRes.ok) {
+        setBlockchainStats(await blockchainRes.json());
       }
     } catch (error) {
       console.error('Failed to fetch analytics:', error);
@@ -68,16 +74,16 @@ export default function Analytics() {
         />
         <StatCard
           icon={<DollarSign className="w-5 h-5" />}
-          label="Total Revenue"
-          value={`$${stats?.totalRevenue || '0.00'}`}
-          subtext={`$${stats?.revenue24h || '0.00'} in last 24h`}
+          label="Blockchain Revenue"
+          value={`$${blockchainStats?.totalRevenue || '0.00'}`}
+          subtext={`$${blockchainStats?.revenue24h || '0.00'} in last 24h`}
           color="green"
         />
         <StatCard
           icon={<CheckCircle className="w-5 h-5" />}
-          label="Success Rate"
-          value={`${stats?.successRate || 0}%`}
-          subtext={`${stats?.verifiedPayments || 0} payments verified`}
+          label="Wallet Balance"
+          value={`$${blockchainStats?.currentBalance || '0.00'}`}
+          subtext={`${blockchainStats?.totalTransactions || 0} total transactions`}
           color="emerald"
         />
         <StatCard
@@ -186,26 +192,30 @@ export default function Analytics() {
           )}
         </div>
 
-        {/* Recent Payments */}
+        {/* Recent Blockchain Payments */}
         <div className="bg-dark-800 rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Recent Payments</h3>
-          {stats?.recentPayments && stats.recentPayments.length > 0 ? (
+          <h3 className="text-lg font-semibold text-white mb-4">Recent Blockchain Payments</h3>
+          {blockchainStats?.recentTransactions && blockchainStats.recentTransactions.length > 0 ? (
             <div className="space-y-2">
-              {stats.recentPayments.map((payment) => (
-                <div key={payment.id} className="flex items-center justify-between p-3 bg-dark-700 rounded">
+              {blockchainStats.recentTransactions.map((tx) => (
+                <div key={tx.id} className="flex items-center justify-between p-3 bg-dark-700 rounded">
                   <div className="flex-1">
                     <div className="text-sm font-medium text-white">
-                      ${payment.amountUSDC || '0.00'} USDC
+                      ${tx.amountUSDC} USDC
                     </div>
                     <div className="text-xs text-gray-400">
-                      {payment.modelId || 'Unknown'} • {new Date(payment.timestamp).toLocaleTimeString()}
+                      From: {tx.from.substring(0, 6)}...{tx.from.substring(38)} • {new Date(tx.timestamp).toLocaleTimeString()}
                     </div>
+                    <a
+                      href={`https://basescan.org/tx/${tx.txHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-accent-green hover:underline"
+                    >
+                      View on BaseScan
+                    </a>
                   </div>
-                  {payment.verified ? (
-                    <CheckCircle className="w-5 h-5 text-green-400" />
-                  ) : (
-                    <XCircle className="w-5 h-5 text-red-400" />
-                  )}
+                  <CheckCircle className="w-5 h-5 text-green-400" />
                 </div>
               ))}
             </div>
