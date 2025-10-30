@@ -29,9 +29,9 @@ export default function ProofVisualization({ proofData }) {
               <p className="text-accent-green font-mono">{output}</p>
             </div>
             <div>
-              <p className="text-gray-400 mb-1">Verification</p>
+              <p className="text-gray-400 mb-1">Proof Validity</p>
               <p className={`font-mono ${verification ? 'text-accent-green' : 'text-red-400'}`}>
-                {verification ? 'Valid ✓' : 'Invalid ✗'}
+                {verification ? 'Cryptographically Valid ✓' : 'Invalid ✗'}
               </p>
             </div>
             <div>
@@ -93,6 +93,10 @@ export default function ProofVisualization({ proofData }) {
             <p>✓ Private inputs never revealed to verifier</p>
             <p>✓ Cryptographically verifiable authorization decision</p>
             <p>✓ Enhanced with Greater, Less, Slice, Identity operations</p>
+            <p className="text-xs text-gray-500 mt-3 italic">
+              Note: A cryptographically valid proof can result in either approval or denial.
+              The proof validates the computation was performed correctly.
+            </p>
           </div>
         </div>
       </div>
