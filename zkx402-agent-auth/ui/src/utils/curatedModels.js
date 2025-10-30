@@ -334,7 +334,6 @@ export const INPUT_CONFIGS = {
     label: 'Transaction Amount',
     description: 'Amount to authorize (in cents)',
     placeholder: '5000',
-    example: '5000 = $50.00',
     type: 'number',
     min: 0
   },
@@ -342,7 +341,6 @@ export const INPUT_CONFIGS = {
     label: 'Account Balance',
     description: 'Current balance (in cents)',
     placeholder: '10000',
-    example: '10000 = $100.00',
     type: 'number',
     min: 0
   },
@@ -350,7 +348,6 @@ export const INPUT_CONFIGS = {
     label: 'Maximum Percentage',
     description: 'Max % of balance to spend',
     placeholder: '10',
-    example: '10 = 10%',
     type: 'number',
     min: 0,
     max: 100
@@ -359,7 +356,6 @@ export const INPUT_CONFIGS = {
     label: 'Vendor Trust Score',
     description: 'Vendor reputation (0-100)',
     placeholder: '75',
-    example: '75 = 75% trusted',
     type: 'number',
     min: 0,
     max: 100
@@ -368,7 +364,6 @@ export const INPUT_CONFIGS = {
     label: 'Minimum Trust Required',
     description: 'Minimum acceptable trust score',
     placeholder: '50',
-    example: '50 = 50% minimum',
     type: 'number',
     min: 0,
     max: 100
@@ -377,7 +372,6 @@ export const INPUT_CONFIGS = {
     label: '1-Hour Spending',
     description: 'Amount spent in last hour (cents)',
     placeholder: '10000',
-    example: '10000 = $100.00',
     type: 'number',
     min: 0
   },
@@ -385,7 +379,6 @@ export const INPUT_CONFIGS = {
     label: '1-Hour Limit',
     description: 'Maximum allowed per hour (cents)',
     placeholder: '20000',
-    example: '20000 = $200.00',
     type: 'number',
     min: 0
   },
@@ -393,7 +386,6 @@ export const INPUT_CONFIGS = {
     label: '24-Hour Spending',
     description: 'Amount spent today (cents)',
     placeholder: '20000',
-    example: '20000 = $200.00',
     type: 'number',
     min: 0
   },
@@ -401,7 +393,6 @@ export const INPUT_CONFIGS = {
     label: '24-Hour Limit',
     description: 'Maximum allowed per day (cents)',
     placeholder: '50000',
-    example: '50000 = $500.00',
     type: 'number',
     min: 0
   },
@@ -409,7 +400,6 @@ export const INPUT_CONFIGS = {
     label: 'Daily Spending',
     description: 'Amount spent today (cents)',
     placeholder: '5000',
-    example: '5000 = $50.00',
     type: 'number',
     min: 0
   },
@@ -417,7 +407,6 @@ export const INPUT_CONFIGS = {
     label: 'Daily Cap',
     description: 'Maximum daily spending (cents)',
     placeholder: '20000',
-    example: '20000 = $200.00',
     type: 'number',
     min: 0
   },
@@ -425,7 +414,6 @@ export const INPUT_CONFIGS = {
     label: 'User Age',
     description: 'Age in years',
     placeholder: '25',
-    example: '25 years old',
     type: 'number',
     min: 0,
     max: 150
@@ -434,7 +422,6 @@ export const INPUT_CONFIGS = {
     label: 'Minimum Age',
     description: 'Required minimum age',
     placeholder: '21',
-    example: '21 years old',
     type: 'number',
     min: 0,
     max: 150
@@ -443,7 +430,6 @@ export const INPUT_CONFIGS = {
     label: 'User History Score',
     description: 'Historical behavior score (0-100)',
     placeholder: '80',
-    example: '80 = good history',
     type: 'number',
     min: 0,
     max: 100
