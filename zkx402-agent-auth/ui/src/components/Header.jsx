@@ -30,7 +30,7 @@ export default function Header() {
                 href="https://www.zk-x402.com/"
                 className="cursor-pointer"
               >
-                <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-accent-green to-accent-blue bg-clip-text text-transparent leading-none">
+                <span className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-accent-green to-accent-blue bg-clip-text text-transparent leading-none">
                   zkx402
                 </span>
               </a>
