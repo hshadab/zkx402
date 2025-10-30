@@ -111,12 +111,16 @@ fn main() {
 
     // Verify proof
     let verify_start = std::time::Instant::now();
-    let is_valid = snark.verify((&pp).into(), program_output.clone()).is_ok();
+    let verify_result = snark.verify((&pp).into(), program_output.clone());
+    let is_valid = verify_result.is_ok();
+    if let Err(e) = &verify_result {
+        eprintln!("Verification error: {:?}", e);
+    }
     let verification_time = verify_start.elapsed();
 
     // Extract output
     let output_val = program_output.output.inner[0];
-    let approved = output_val > 50;
+    let approved = output_val == 1;
 
     // Estimate proof size (rough estimate based on trace length)
     let proof_size_kb = 15.0 + (snark.trace_length as f64 * 0.05);
