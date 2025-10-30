@@ -13,7 +13,7 @@ export default function ProofVisualization({ proofData }) {
         {/* Authorization Result */}
         <div className="bg-dark-700 p-6 rounded-lg border border-dark-600">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Authorization Status</h3>
+            <h3 className="text-lg font-semibold">Authorization (Proof) Status</h3>
             <span className={`status-badge ${approved ? 'status-success' : 'status-error'}`}>
               {approved ? '✓ Approved' : '✗ Denied'}
             </span>
@@ -29,7 +29,7 @@ export default function ProofVisualization({ proofData }) {
               <p className="text-accent-green font-mono">{output}</p>
             </div>
             <div>
-              <p className="text-gray-400 mb-1">Proof Validity</p>
+              <p className="text-gray-400 mb-1">Proof Verification</p>
               <p className={`font-mono ${verification ? 'text-accent-green' : 'text-red-400'}`}>
                 {verification ? 'Cryptographically Valid ✓' : 'Invalid ✗'}
               </p>
