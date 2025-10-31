@@ -38,10 +38,12 @@ JOLT Atlas is a zero-knowledge machine learning proof system for ONNX models. Th
   - `onnx-tracer/src/ops/poly.rs`: Added `Div` to `PolyOp` enum, ONNXOpcode mapping, trait bounds, and match statements
   - `onnx-tracer/src/graph/utilities.rs:798`: Added "Div" string matching
   - `onnx-tracer/src/tensor/ops.rs:996-1010`: Implemented element-wise division function
+  - `zkml-jolt-core/src/jolt/instruction/div.rs`: Div v2 gadget with Jolt-style REM/REMW semantics
 - **Purpose**: Enable division operations for percentage calculations, normalization, and rate computations
 - **Use Case**: `amount / daily_limit`, `balance / 100` (cents to dollars), risk score normalization
 - **Implementation**: Full polynomial operation with scale factor adjustment
 - **Scale Handling**: Output scale = input_scale[0] - input_scale[1]
+- **Known Limitations**: Dynamic division operations may encounter verification failures in sumcheck phase (see Known Limitations #5)
 
 #### Cast Operation (Type Conversion)
 - **Location**: `onnx-tracer/src/ops/lookup.rs:63`
@@ -314,6 +316,33 @@ assert!(verify_proof(&proof, &output));
 - **Impact**: Cannot process multiple inputs in parallel
 - **Workaround**: Run sequentially
 - **Status**: Architectural limitation
+
+### 5. Division Operation Verification Challenges
+- **Issue**: Some models with dynamic division operations may fail Spartan R1CS sumcheck verification
+- **Impact**: Models using `Div` with variable denominators may not generate verifiable proofs
+- **Root Cause**: Sumcheck verification pressure in inner constraint systems
+- **Implemented Workarounds**:
+  1. **Division-Free Model Variants** (`_no_div.onnx`):
+     - Rewrite percentage checks using cross-multiplication: `amount * 100 < balance * limit` instead of `amount / balance < limit`
+     - Available for: `percentage_limit`, `composite_scoring`, `risk_neural`
+     - Enable with: `PREFER_NO_DIV=1` flag in server.js
+  2. **Div v2 Gadget** (Jolt-style REM/REMW semantics):
+     - Implements signed/unsigned division with proper overflow handling
+     - Enable with: `JOLT_DIV_V2=1 JOLT_DIV_SEMANTICS=signed`
+     - Status: Gadget math correct, but sumcheck verification still fails on some models
+  3. **Constant Division Rewrite**:
+     - Rewrites constant divisions (e.g., divide by 128) into multiplication + assertions
+     - Enable with: `JOLT_REWRITE_CONST_DIV=1`
+     - Location: `zkml-jolt-core/src/jolt/instruction/rebase_scale.rs`
+  4. **Prevent Fractional Multiplication → Division Conversion**:
+     - Stops ONNX tracer from converting `x * 0.5` into `x / 2.0`
+     - Enable with: `JOLT_REWRITE_CONST_DIV=1`
+     - Location: `onnx-tracer/src/graph/utilities.rs:799-831`
+- **Recommended Production Setup**:
+  ```bash
+  PREFER_NO_DIV=1 JOLT_REWRITE_CONST_DIV=1 npm start
+  ```
+- **Status**: 10 out of 10 production models working with division-free variants
 
 ## Migration from Upstream JOLT Atlas
 

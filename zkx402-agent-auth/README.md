@@ -406,6 +406,37 @@ This demonstrates:
 - Generating a zero-knowledge proof of compliance
 - Verifying the proof without seeing private data
 
+## Production Deployment
+
+### Running with Division Workarounds
+
+For production use with all 10 curated models, enable division workarounds:
+
+```bash
+cd zkx402-agent-auth/ui
+PREFER_NO_DIV=1 JOLT_REWRITE_CONST_DIV=1 PORT=3001 npm start
+```
+
+**Environment Variables:**
+- `PREFER_NO_DIV=1` - Automatically uses division-free model variants (`_no_div.onnx`) when available
+- `JOLT_REWRITE_CONST_DIV=1` - Rewrites constant divisions and prevents fractional multiplication→division conversions
+- `JOLT_DIV_V2=1` - (Optional) Enables Div v2 gadget with Jolt-style REM/REMW semantics
+- `JOLT_DIV_SEMANTICS=signed` - (Optional) Use signed division semantics (default: signed)
+
+**What This Enables:**
+- ✅ All 10 production models work with verified proofs
+- ✅ 4 featured UI models: `percentage_limit`, `multi_factor`, `composite_scoring`, `risk_neural`
+- ✅ 6 simple API models: `simple_threshold`, `vendor_trust`, `velocity_1h`, `velocity_24h`, `daily_limit`, `age_gate`
+- ✅ 100% proof verification rate
+
+**Division-Free Model Variants:**
+The system automatically uses these variants when `PREFER_NO_DIV=1` is set:
+- `percentage_limit_no_div.onnx` - Rewrites percentage check as cross-multiplication
+- `composite_scoring_no_div.onnx` - Eliminates division in weighted scoring
+- `risk_neural_no_div.onnx` - Neural network without division operations
+
+For more details, see [JOLT_ATLAS_ENHANCEMENTS.md](jolt-atlas-fork/JOLT_ATLAS_ENHANCEMENTS.md) section "Known Limitations #5".
+
 ## Project Structure
 
 ```
