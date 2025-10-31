@@ -272,14 +272,17 @@ pub fn jolt_execution_trace(raw_trace: Vec<ONNXCycle>) -> ExecutionTrace {
             ) {
                 if rem != 0 {
                     if let Some(td) = cycle.instr.td {
-                        let idx = vtr_index(td);
-                        // store pre-state
-                        cycle.memory_state.td_pre_val =
-                            Some(Tensor::from(u64_vec_to_i32_iter(&vtr[idx])));
-                        // sanity check
-                        assert_eq!(cycle.td_pre_vals(), vtr[idx], "cycle: {cycle:#?}");
-                        // update post-state
-                        vtr[idx] = cycle.td_post_vals();
+                        // Only treat writes to virtual registers as VTR updates
+                        if td >= TEST_TENSOR_REGISTER_COUNT as usize {
+                            let idx = vtr_index(td);
+                            // store pre-state
+                            cycle.memory_state.td_pre_val =
+                                Some(Tensor::from(u64_vec_to_i32_iter(&vtr[idx])));
+                            // sanity check
+                            assert_eq!(cycle.td_pre_vals(), vtr[idx], "cycle: {cycle:#?}");
+                            // update post-state
+                            vtr[idx] = cycle.td_post_vals();
+                        }
                     }
                 }
             }

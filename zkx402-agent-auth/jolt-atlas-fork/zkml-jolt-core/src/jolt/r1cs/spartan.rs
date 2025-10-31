@@ -101,6 +101,10 @@ where
     F: JoltField,
     ProofTranscript: Transcript,
 {
+    #[inline]
+    fn env_flag(name: &str) -> bool {
+        std::env::var(name).ok().as_deref() == Some("1")
+    }
     #[tracing::instrument(skip_all, name = "Spartan::setup")]
     pub fn setup(
         constraint_builder: &CombinedUniformBuilder<F>,
@@ -125,6 +129,18 @@ where
     where
         PCS: CommitmentScheme<ProofTranscript, Field = F>,
     {
+        // Optional: plan for chunking/tuning (scaffolding only, no behavior change yet)
+        if std::env::var("JOLT_SUMCHECK_CHUNK").ok().as_deref() == Some("1") && Self::env_flag("JOLT_TRACE_TRANSCRIPT") {
+            eprintln!("[JOLT_DEBUG] Sumcheck chunking flag set, using single-pass for now (scaffolding)");
+        }
+        if Self::env_flag("JOLT_TRACE_TRANSCRIPT") {
+            eprintln!(
+                "[JOLT_DEBUG] Spartan::prove start rows_bits={} steps={} vars_uniform={}",
+                key.num_rows_bits(),
+                key.num_steps,
+                key.num_vars_uniform_padded()
+            );
+        }
         let input_polys: Vec<MultilinearPolynomial<F>> = ALL_R1CS_INPUTS
             .par_iter()
             .map(|var| var.generate_witness::<F, PCS, ProofTranscript>(trace, preprocessing))
@@ -148,6 +164,14 @@ where
            A_small, B_small, C_small corresponding to the uniform constraints.
         */
         let tau: Vec<F> = transcript.challenge_vector(num_rounds_x);
+        if Self::env_flag("JOLT_TRACE_TRANSCRIPT") {
+            eprintln!(
+                "[JOLT_DEBUG] Outer sumcheck rounds_x={} tau_len={} constraints={}",
+                num_rounds_x,
+                tau.len(),
+                constraint_builder.uniform_builder.constraints.len()
+            );
+        }
         let uniform_constraints_only_padded = constraint_builder
             .uniform_builder
             .constraints
@@ -181,6 +205,13 @@ where
         let num_cycles_bits = num_cycles.ilog2() as usize;
 
         let inner_sumcheck_RLC: F = transcript.challenge_scalar();
+        if Self::env_flag("JOLT_TRACE_TRANSCRIPT") {
+            eprintln!(
+                "[JOLT_DEBUG] Inner sumcheck RLC challenge sampled. cycles={} cycles_bits={}",
+                key.num_steps,
+                key.num_steps.log_2()
+            );
+        }
 
         let (r_cycle, rx_var) = outer_sumcheck_r.split_at(num_cycles_bits);
 
@@ -291,11 +322,23 @@ where
         ProofTranscript: Transcript,
     {
         let num_rounds_x = key.num_rows_total().log_2();
+        if Self::env_flag("JOLT_TRACE_TRANSCRIPT") {
+            eprintln!(
+                "[JOLT_DEBUG] Spartan::verify start rows_total={} rounds_x={} steps={} vars_uniform={}",
+                key.num_rows_total(),
+                num_rounds_x,
+                key.num_steps,
+                key.num_vars_uniform_padded()
+            );
+        }
 
         /* Sumcheck 1: Outer sumcheck
           Verifies: \sum_x eq(tau, x) * (Az(x) * Bz(x) - Cz(x)) = 0
         */
         let tau: Vec<F> = transcript.challenge_vector(num_rounds_x);
+        if Self::env_flag("JOLT_TRACE_TRANSCRIPT") {
+            eprintln!("[JOLT_DEBUG] Outer sumcheck tau_len={}", tau.len());
+        }
 
         let (claim_outer_final, outer_sumcheck_r) = self
             .outer_sumcheck_proof
@@ -304,6 +347,13 @@ where
 
         // Outer sumcheck is bound from the top, reverse the challenge
         let outer_sumcheck_r: Vec<F> = outer_sumcheck_r.into_iter().rev().collect();
+        if Self::env_flag("JOLT_TRACE_TRANSCRIPT") {
+            eprintln!(
+                "[JOLT_DEBUG] Outer sumcheck r_len={} rows_bits={}",
+                outer_sumcheck_r.len(),
+                key.num_rows_bits()
+            );
+        }
 
         let (claim_Az, claim_Bz, claim_Cz) = self.outer_sumcheck_claims;
         let taus_bound_rx = EqPolynomial::mle(&tau, &outer_sumcheck_r);
@@ -326,12 +376,23 @@ where
                     (A_small(rx, ry) + r * B_small(rx, ry) + r^2 * C_small(rx, ry)) * z(ry)
         */
         let inner_sumcheck_RLC: F = transcript.challenge_scalar();
+        if Self::env_flag("JOLT_TRACE_TRANSCRIPT") {
+            eprintln!("[JOLT_DEBUG] Inner sumcheck RLC sampled");
+        }
         let claim_inner_joint = self.outer_sumcheck_claims.0
             + inner_sumcheck_RLC * self.outer_sumcheck_claims.1
             + inner_sumcheck_RLC.square() * self.outer_sumcheck_claims.2;
 
         let num_cycles_bits = key.num_steps.log_2();
         let (r_cycle, rx_var) = outer_sumcheck_r.split_at(num_cycles_bits);
+        if Self::env_flag("JOLT_TRACE_TRANSCRIPT") {
+            eprintln!(
+                "[JOLT_DEBUG] Split challenges: r_cycle_len={} rx_var_len={} cycles_bits={}",
+                r_cycle.len(),
+                rx_var.len(),
+                num_cycles_bits
+            );
+        }
 
         let inner_sumcheck = InnerSumcheck::<F>::new_verifier(
             claim_inner_joint,
@@ -342,9 +403,15 @@ where
         );
 
         // Verify the inner sumcheck
-        let _inner_sumcheck_r = inner_sumcheck
-            .verify_single(&self.inner_sumcheck_proof, transcript)
-            .map_err(|_| SpartanError::InvalidInnerSumcheckProof)?;
+        let _inner_sumcheck_r = match inner_sumcheck.verify_single(&self.inner_sumcheck_proof, transcript) {
+            Ok(r) => r,
+            Err(_e) => {
+                if Self::env_flag("JOLT_TRACE_TRANSCRIPT") {
+                    eprintln!("[JOLT_DEBUG] Inner sumcheck verification failed. Claimed witness evals: {}", self.claimed_witness_evals.len());
+                }
+                return Err(SpartanError::InvalidInnerSumcheckProof);
+            }
+        };
 
         /* Sumcheck 3: Batched sumcheck NextPC verification
            Verifies the batched constraint for NextPC
@@ -492,32 +559,59 @@ impl<F: JoltField, ProofTranscript: Transcript> BatchableSumcheckInstance<F, Pro
             .expect("Prover state not initialized");
         let degree = <Self as BatchableSumcheckInstance<F, ProofTranscript>>::degree(self);
 
-        let univariate_poly_evals: Vec<F> = (0..prover_state.poly_abc_small.len() / 2)
-            .into_par_iter()
-            .map(|i| {
-                let abc_evals =
-                    prover_state
-                        .poly_abc_small
-                        .sumcheck_evals(i, degree, BindingOrder::HighToLow);
-                let z_evals =
-                    prover_state
-                        .poly_z
-                        .sumcheck_evals(i, degree, BindingOrder::HighToLow);
+        // Tuning: allow alternate binding order via env flag for experimentation.
+        // Default remains HighToLow.
+        let use_low_to_high = std::env::var("JOLT_SUMCHECK_BIND_LOW2HIGH").ok().as_deref() == Some("1");
+        let binding_order = if use_low_to_high {
+            BindingOrder::LowToHigh
+        } else {
+            BindingOrder::HighToLow
+        };
 
-                vec![
-                    abc_evals[0] * z_evals[0], // eval at 0
-                    abc_evals[1] * z_evals[1], // eval at 2
-                ]
-            })
-            .reduce(
-                || vec![F::zero(); degree],
-                |mut running, new| {
-                    for i in 0..degree {
-                        running[i] += new[i];
-                    }
-                    running
-                },
-            );
+        // Optional chunking to reduce per-batch pressure; preserves exact math by summing chunks.
+        let use_chunking = std::env::var("JOLT_SUMCHECK_CHUNK").ok().as_deref() == Some("1");
+        let len_half = prover_state.poly_abc_small.len() / 2;
+        let chunk_size = std::env::var("JOLT_SUMCHECK_CHUNK_SIZE")
+            .ok()
+            .and_then(|s| s.parse::<usize>().ok())
+            .unwrap_or(8192);
+
+        let univariate_poly_evals: Vec<F> = if use_chunking && chunk_size > 0 {
+            let mut acc = vec![F::zero(); degree];
+            let mut start = 0usize;
+            while start < len_half {
+                let end = core::cmp::min(start + chunk_size, len_half);
+                let chunk_acc: Vec<F> = (start..end)
+                    .into_par_iter()
+                    .map(|i| {
+                        let abc_evals = prover_state.poly_abc_small.sumcheck_evals(i, degree, binding_order);
+                        let z_evals = prover_state.poly_z.sumcheck_evals(i, degree, binding_order);
+                        vec![abc_evals[0] * z_evals[0], abc_evals[1] * z_evals[1]]
+                    })
+                    .reduce(
+                        || vec![F::zero(); degree],
+                        |mut running, new| {
+                            for i in 0..degree { running[i] += new[i]; }
+                            running
+                        },
+                    );
+                for i in 0..degree { acc[i] += chunk_acc[i]; }
+                start = end;
+            }
+            acc
+        } else {
+            (0..len_half)
+                .into_par_iter()
+                .map(|i| {
+                    let abc_evals = prover_state.poly_abc_small.sumcheck_evals(i, degree, binding_order);
+                    let z_evals = prover_state.poly_z.sumcheck_evals(i, degree, binding_order);
+                    vec![abc_evals[0] * z_evals[0], abc_evals[1] * z_evals[1]]
+                })
+                .reduce(
+                    || vec![F::zero(); degree],
+                    |mut running, new| { for i in 0..degree { running[i] += new[i]; } running },
+                )
+        };
 
         univariate_poly_evals
     }

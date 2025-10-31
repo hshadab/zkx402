@@ -814,12 +814,17 @@ pub fn new_op_from_onnx(
                 let const_idx = const_idx[0];
                 if let Some(c) = inputs[const_idx].opkind().get_mutable_constant() {
                     if c.raw_values.len() == 1 && c.raw_values[0] < 1. {
-                        inputs[const_idx].decrement_use();
-                        deleted_indices.push(const_idx);
-                        op = SupportedOp::Nonlinear(LookupOp::Div {
-                            // we invert the constant for division
-                            denom: crate::ops::utils::F32(1. / c.raw_values[0]),
-                        })
+                        // Optional: avoid rewriting fractional mul as Div when enabled
+                        let avoid_div = std::env::var("JOLT_REWRITE_CONST_DIV").ok().as_deref()
+                            == Some("1");
+                        if !avoid_div {
+                            inputs[const_idx].decrement_use();
+                            deleted_indices.push(const_idx);
+                            op = SupportedOp::Nonlinear(LookupOp::Div {
+                                // we invert the constant for division
+                                denom: crate::ops::utils::F32(1. / c.raw_values[0]),
+                            })
+                        }
                     }
                 }
             }

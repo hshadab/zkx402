@@ -374,9 +374,21 @@ function generateJoltProof(modelId, inputs) {
       return reject(new Error(`Model not found: ${modelId}`));
     }
 
-    const modelPath = path.join(MODELS_DIR, model.file);
+    // Resolve model path with optional division-free fallback
+    let modelRelPath = model.file;
+    const preferNoDiv = process.env.PREFER_NO_DIV === '1';
+    if (preferNoDiv && modelRelPath.endsWith('.onnx')) {
+      const noDivCandidate = modelRelPath.replace(/\.onnx$/i, '_no_div.onnx');
+      const noDivFullPath = path.join(MODELS_DIR, noDivCandidate);
+      if (fs.existsSync(noDivFullPath)) {
+        modelRelPath = noDivCandidate;
+        console.log(`[Proof] Using division-free model variant for ${modelId}: ${noDivCandidate}`);
+      }
+    }
+
+    const modelPath = path.join(MODELS_DIR, modelRelPath);
     if (!fs.existsSync(modelPath)) {
-      return reject(new Error(`Model file not found: ${model.file}`));
+      return reject(new Error(`Model file not found: ${modelRelPath}`));
     }
 
     // Build input arguments dynamically based on model's required inputs
@@ -387,9 +399,23 @@ function generateJoltProof(modelId, inputs) {
 
     // Use pre-built binary if it exists, otherwise cargo run
     const usePrebuiltBinary = fs.existsSync(JOLT_BINARY);
+    // Enable prover tuning flags via environment passthrough
+    const proverEnv = {
+      JOLT_TRACE_TRANSCRIPT: process.env.JOLT_TRACE_TRANSCRIPT || undefined,
+      JOLT_TRACE_DIV: process.env.JOLT_TRACE_DIV || undefined,
+      JOLT_REWRITE_CONST_DIV: process.env.JOLT_REWRITE_CONST_DIV || undefined,
+      JOLT_DIV_V2: process.env.JOLT_DIV_V2 || undefined,
+      JOLT_SUMCHECK_CHUNK: process.env.JOLT_SUMCHECK_CHUNK || undefined,
+      JOLT_SUMCHECK_CHUNK_SIZE: process.env.JOLT_SUMCHECK_CHUNK_SIZE || undefined,
+      JOLT_SUMCHECK_BIND_LOW2HIGH: process.env.JOLT_SUMCHECK_BIND_LOW2HIGH || undefined,
+    };
+    const envPrefix = Object.entries(proverEnv)
+      .filter(([_, v]) => v !== undefined)
+      .map(([k, v]) => `${k}=${v}`)
+      .join(' ');
     const cargoCmd = usePrebuiltBinary
-      ? `${JOLT_BINARY} "${modelPath}" ${inputArgs}`
-      : `cd ${JOLT_PROVER_DIR}/zkml-jolt-core && cargo run --release --example proof_json_output "${modelPath}" ${inputArgs}`;
+      ? `${envPrefix} ${JOLT_BINARY} "${modelPath}" ${inputArgs}`.trim()
+      : `${envPrefix} cd ${JOLT_PROVER_DIR}/zkml-jolt-core && ${envPrefix} cargo run --release --example proof_json_output "${modelPath}" ${inputArgs}`.trim();
 
     console.log(`[JOLT Atlas] Generating proof for ${modelId}: ${cargoCmd}`);
 

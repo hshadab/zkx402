@@ -15,6 +15,7 @@ use jolt_core::{
     utils::transcript::KeccakTranscript,
 };
 use onnx_tracer::{model, tensor::Tensor};
+use onnx_tracer::trace_types::ONNXOpcode;
 use serde::{Deserialize, Serialize};
 use std::env;
 
@@ -101,6 +102,30 @@ fn main() {
 
     // Execute ONNX model and get trace
     let (raw_trace, program_output) = onnx_tracer::execution_trace(model_obj.clone(), &input_tensor);
+
+    // Optional debug: trace DIV occurrences and surrounding opcodes
+    if std::env::var("JOLT_TRACE_DIV").ok().as_deref() == Some("1") {
+        let mut div_indices: Vec<usize> = Vec::new();
+        for (i, cycle) in raw_trace.iter().enumerate() {
+            if cycle.instr.opcode == ONNXOpcode::Div {
+                div_indices.push(i);
+            }
+        }
+        eprintln!("[JOLT_DEBUG] DIV ops: {}", div_indices.len());
+        for &idx in div_indices.iter() {
+            let start = idx.saturating_sub(2);
+            let end = (idx + 3).min(raw_trace.len());
+            eprintln!("[JOLT_DEBUG] Trace window around DIV @{}:", idx);
+            for j in start..end {
+                eprintln!("  [{}] opcode={:?} addr={} virt_rem={:?}",
+                    j,
+                    raw_trace[j].instr.opcode,
+                    raw_trace[j].instr.address,
+                    raw_trace[j].instr.virtual_sequence_remaining
+                );
+            }
+        }
+    }
     let execution_trace = jolt_execution_trace(raw_trace);
 
     // Generate proof

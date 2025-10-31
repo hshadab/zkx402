@@ -3,6 +3,7 @@ use onnx_tracer::{
     tensor::Tensor,
     trace_types::{MemoryState, ONNXCycle, ONNXInstr, ONNXOpcode},
 };
+use jolt_core::jolt::instruction::LookupQuery;
 
 use crate::{
     jolt::{
@@ -219,8 +220,141 @@ impl<const WORD_SIZE: usize> VirtualInstructionSequence for REBASEInstruction<WO
             advice_value: None,
         };
 
-        let div_virtual_trace = DIVInstruction::<WORD_SIZE>::virtual_trace(div_cycle);
-        virtual_trace.extend(div_virtual_trace);
+        let rewrite = std::env::var("JOLT_REWRITE_CONST_DIV").ok().as_deref() == Some("1");
+        if rewrite {
+            use crate::jolt::instruction::{virtual_advice::ADVICEInstruction, mul::MUL, beq::BEQInstruction};
+            use onnx_tracer::constants::virtual_tensor_index;
+
+            // v_r = advised res
+            let v_r = Some(virtual_tensor_index(1));
+            let r_lookup = (0..MAX_TENSOR_SIZE)
+                .map(|i| ADVICEInstruction::<WORD_SIZE>(res[i]).to_lookup_output())
+                .collect::<Vec<u64>>();
+            virtual_trace.push(ONNXCycle {
+                instr: ONNXInstr {
+                    address: cycle.instr.address,
+                    opcode: ONNXOpcode::VirtualAdvice,
+                    ts1: None,
+                    ts2: None,
+                    ts3: None,
+                    td: v_r,
+                    imm: None,
+                    virtual_sequence_remaining: Some(Self::SEQUENCE_LENGTH - virtual_trace.len() - 1),
+                    active_output_elements: cycle.instr.active_output_elements,
+                    output_dims: cycle.instr.output_dims,
+                },
+                memory_state: MemoryState {
+                    ts1_val: None,
+                    ts2_val: None,
+                    ts3_val: None,
+                    td_pre_val: None,
+                    td_post_val: Some(Tensor::from(u64_vec_to_i32_iter(&r_lookup))),
+                },
+                advice_value: Some(Tensor::from(u64_vec_to_i32_iter(&res))),
+            });
+
+            // v_c = const 128
+            let v_c = Some(virtual_tensor_index(2));
+            let denom_tensor = Some(Tensor::from(u64_vec_to_i32_iter(&vec![128; MAX_TENSOR_SIZE])));
+            virtual_trace.push(ONNXCycle {
+                instr: ONNXInstr {
+                    address: cycle.instr.address,
+                    opcode: ONNXOpcode::VirtualConst,
+                    ts1: None,
+                    ts2: None,
+                    ts3: None,
+                    td: v_c,
+                    imm: denom_tensor.clone(),
+                    virtual_sequence_remaining: Some(Self::SEQUENCE_LENGTH - virtual_trace.len() - 1),
+                    active_output_elements: cycle.instr.active_output_elements,
+                    output_dims: cycle.instr.output_dims,
+                },
+                memory_state: MemoryState { ts1_val: None, ts2_val: None, ts3_val: None, td_pre_val: None, td_post_val: denom_tensor },
+                advice_value: None,
+            });
+
+            // v_prod = v_r * v_c
+            let v_prod = Some(virtual_tensor_index(3));
+            let prod_vals = (0..MAX_TENSOR_SIZE)
+                .map(|i| MUL::<WORD_SIZE>(res[i], 128).to_lookup_output())
+                .collect::<Vec<u64>>();
+            virtual_trace.push(ONNXCycle {
+                instr: ONNXInstr {
+                    address: cycle.instr.address,
+                    opcode: ONNXOpcode::Mul,
+                    ts1: v_r,
+                    ts2: v_c,
+                    ts3: None,
+                    td: v_prod,
+                    imm: None,
+                    virtual_sequence_remaining: Some(Self::SEQUENCE_LENGTH - virtual_trace.len() - 1),
+                    active_output_elements: cycle.instr.active_output_elements,
+                    output_dims: cycle.instr.output_dims,
+                },
+                memory_state: MemoryState {
+                    ts1_val: Some(Tensor::from(u64_vec_to_i32_iter(&res))),
+                    ts2_val: Some(Tensor::from(u64_vec_to_i32_iter(&vec![128; MAX_TENSOR_SIZE]))),
+                    ts3_val: None,
+                    td_pre_val: None,
+                    td_post_val: Some(Tensor::from(u64_vec_to_i32_iter(&prod_vals))),
+                },
+                advice_value: None,
+            });
+
+            // assert v_prod == inner_res_0
+            let _assert_ok = (0..MAX_TENSOR_SIZE)
+                .map(|i| BEQInstruction::<WORD_SIZE>(prod_vals[i], inner_res_0[i]).to_lookup_output())
+                .collect::<Vec<u64>>();
+            virtual_trace.push(ONNXCycle {
+                instr: ONNXInstr {
+                    address: cycle.instr.address,
+                    opcode: ONNXOpcode::VirtualAssertEq,
+                    ts1: v_prod,
+                    ts2: v_0,
+                    ts3: None,
+                    td: None,
+                    imm: None,
+                    virtual_sequence_remaining: Some(Self::SEQUENCE_LENGTH - virtual_trace.len() - 1),
+                    active_output_elements: cycle.instr.active_output_elements,
+                    output_dims: cycle.instr.output_dims,
+                },
+                memory_state: MemoryState {
+                    ts1_val: Some(Tensor::from(u64_vec_to_i32_iter(&prod_vals))),
+                    ts2_val: Some(Tensor::from(u64_vec_to_i32_iter(&inner_res_0))),
+                    ts3_val: None,
+                    td_pre_val: None,
+                    td_post_val: None,
+                },
+                advice_value: None,
+            });
+
+            // Move advised result to output
+            virtual_trace.push(ONNXCycle {
+                instr: ONNXInstr {
+                    address: cycle.instr.address,
+                    opcode: ONNXOpcode::VirtualMove,
+                    ts1: v_r,
+                    ts2: None,
+                    ts3: None,
+                    td: cycle.instr.td,
+                    imm: None,
+                    virtual_sequence_remaining: Some(Self::SEQUENCE_LENGTH - virtual_trace.len() - 1),
+                    active_output_elements: cycle.instr.active_output_elements,
+                    output_dims: cycle.instr.output_dims,
+                },
+                memory_state: MemoryState {
+                    ts1_val: Some(Tensor::from(u64_vec_to_i32_iter(&res))),
+                    ts2_val: None,
+                    ts3_val: None,
+                    td_pre_val: None,
+                    td_post_val: Some(Tensor::from(u64_vec_to_i32_iter(&res))),
+                },
+                advice_value: None,
+            });
+        } else {
+            let div_virtual_trace = DIVInstruction::<WORD_SIZE>::virtual_trace(div_cycle);
+            virtual_trace.extend(div_virtual_trace);
+        }
 
         virtual_trace
     }
