@@ -114,7 +114,8 @@ function registerAgentRoutes(app) {
 
   // ========== AGENT API: POLICIES LISTING ==========
   app.get('/api/policies', (req, res) => {
-    const policies = Object.keys(CURATED_MODELS).map(id => {
+    const includeTest = req.query.includeTest === 'false' ? false : true;
+    let policies = Object.keys(CURATED_MODELS).map(id => {
       const model = CURATED_MODELS[id];
       return {
         id,
@@ -152,6 +153,10 @@ function registerAgentRoutes(app) {
         schema_url: `${BASE_URL}/api/policies/${id}/schema`
       };
     });
+
+    if (!includeTest) {
+      policies = policies.filter(p => p.category !== 'Test');
+    }
 
     res.json({
       version: '1.3.0',

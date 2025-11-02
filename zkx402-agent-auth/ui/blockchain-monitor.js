@@ -209,15 +209,23 @@ class BlockchainMonitor {
   }
 }
 
-// Export singleton instance
-const monitor = new BlockchainMonitor();
+// Controlled initialization via env flag (default ON for compatibility)
+const ENABLED = process.env.ENABLE_BLOCKCHAIN_MONITOR === '0' ? false : true;
 
-// Auto-initialize on first require
-monitor.initialize();
-
-// Auto-refresh every 2 minutes
-setInterval(() => {
-  monitor.refresh();
-}, 2 * 60 * 1000);
-
-module.exports = monitor;
+if (!ENABLED) {
+  module.exports = {
+    async getStats() {
+      return { enabled: false };
+    }
+  };
+} else {
+  // Export singleton instance
+  const monitor = new BlockchainMonitor();
+  // Auto-initialize on first require
+  monitor.initialize();
+  // Auto-refresh every 2 minutes
+  setInterval(() => {
+    monitor.refresh();
+  }, 2 * 60 * 1000);
+  module.exports = monitor;
+}

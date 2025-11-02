@@ -17,7 +17,9 @@ const { getPaymentInfo, formatPrice } = require('./base-payment');
 const { registerAgentRoutes, setBaseUrl } = require('./agent-api-routes');
 const webhookManager = require('./webhook-manager');
 const analyticsManager = require('./analytics-manager');
-const blockchainMonitor = require('./blockchain-monitor');
+// Gate blockchain monitor initialization behind env flag (default ON for compatibility)
+const ENABLE_BLOCKCHAIN_MONITOR = process.env.ENABLE_BLOCKCHAIN_MONITOR === '0' ? false : true;
+const blockchainMonitor = ENABLE_BLOCKCHAIN_MONITOR ? require('./blockchain-monitor') : null;
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -159,6 +161,54 @@ app.get('/.well-known/x402', (req, res) => {
       javascript: 'https://github.com/hshadab/zkx402-sdk-js'    // Future
     }
   });
+});
+
+// ========== COMPATIBILITY HEALTH ENDPOINT ==========
+// Provide /api/health in addition to /health for older clients/tests
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    modelsAvailable: Object.keys(CURATED_MODELS).length
+  });
+});
+
+// ========== COMPATIBILITY: MODELS LISTING ==========
+// Legacy endpoint to list models (maps CURATED_MODELS)
+app.get('/api/models', (req, res) => {
+  try {
+    const models = Object.entries(CURATED_MODELS).map(([id, model]) => {
+      const filePath = path.join(MODELS_DIR, model.file);
+      return {
+        id,
+        file: model.file,
+        description: model.description,
+        available: fs.existsSync(filePath)
+      };
+    });
+    res.json({ models });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to list models' });
+  }
+});
+
+// ========== COMPATIBILITY: VALIDATE MODELS ==========
+app.get('/api/validate-models', (req, res) => {
+  try {
+    const models = Object.entries(CURATED_MODELS).map(([id, model]) => {
+      const filePath = path.join(MODELS_DIR, model.file);
+      return {
+        id,
+        file: model.file,
+        exists: fs.existsSync(filePath),
+        path: filePath
+      };
+    });
+    const valid = models.every(m => m.exists);
+    res.json({ valid, models });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to validate models' });
+  }
 });
 
 // ========== x402 MODELS LISTING ==========
@@ -349,7 +399,7 @@ app.post('/x402/verify-proof', async (req, res) => {
   }
 
   // Verify proof structure
-  if (!zkmlProof.approved !== undefined || !zkmlProof.output || !zkmlProof.verification) {
+  if (zkmlProof.approved === undefined || !zkmlProof.output || !zkmlProof.verification) {
     return res.status(400).json({
       isValid: false,
       invalidReason: 'Invalid proof structure'
@@ -393,8 +443,9 @@ function generateJoltProof(modelId, inputs) {
 
     // Build input arguments dynamically based on model's required inputs
     const inputArgs = model.inputs.map(inputName => {
-      const value = parseInt(inputs[inputName]) || 0;
-      return value;
+      const raw = inputs ? inputs[inputName] : undefined;
+      const value = raw === undefined || raw === null || raw === '' ? 0 : parseInt(raw);
+      return Number.isNaN(value) ? 0 : value;
     }).join(' ');
 
     // Use pre-built binary if it exists, otherwise cargo run
@@ -478,8 +529,9 @@ app.post('/api/generate-proof', uiProofLimiter, async (req, res) => {
       return res.status(404).json({ error: `Model not found: ${modelId}` });
     }
 
-    // Validate all required inputs are present
-    const missingInputs = model.inputs.filter(input => !inputs[input]);
+    // Validate all required inputs are present (treat 0 as valid)
+    const inputObj = inputs || {};
+    const missingInputs = model.inputs.filter(input => !Object.prototype.hasOwnProperty.call(inputObj, input));
     if (missingInputs.length > 0) {
       return res.status(400).json({
         error: 'Missing required inputs',
@@ -629,8 +681,11 @@ app.get('/api/analytics/timeseries', (req, res) => {
 // Get blockchain payment stats
 app.get('/api/analytics/blockchain', async (req, res) => {
   try {
+    if (!ENABLE_BLOCKCHAIN_MONITOR || !blockchainMonitor) {
+      return res.json({ enabled: false, message: 'Blockchain monitor disabled' });
+    }
     const stats = await blockchainMonitor.getStats();
-    res.json(stats);
+    res.json({ enabled: true, ...stats });
   } catch (error) {
     console.error('[Blockchain] Error getting blockchain stats:', error);
     res.status(500).json({ error: 'Failed to get blockchain stats' });

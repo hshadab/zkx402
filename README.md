@@ -708,9 +708,7 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for complete instructions.
 - [ ] N-API bindings for faster inference proof generation
 - [ ] Proof caching by input hash for high-throughput x402 systems
 - [ ] WebSocket support for real-time x402 authorization updates
-- [ ] Standalone verifier application for x402 proof verification
 - [ ] Model training pipeline in UI for custom x402 policies
-- [ ] Multi-tenant support for x402 service providers
 
 ## 🤝 Contributing
 

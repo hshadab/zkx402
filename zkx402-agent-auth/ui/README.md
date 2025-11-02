@@ -312,4 +312,4 @@ MIT License - Built on JOLT Atlas (MIT)
 - JOLT Atlas: https://github.com/ICME-Lab/jolt-atlas
 - zkX402: https://github.com/hshadab/zkx402
 - RugDetector UI: https://github.com/hshadab/rugdetector
-- zkML-ERC8004: https://github.com/hshadab/zkml-erc8004
+<!-- Removed non-MVP reference to ERC-8004 to keep scope focused on zkX402 -->
