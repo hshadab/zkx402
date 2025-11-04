@@ -41,18 +41,20 @@ cd jolt-prover
 cargo run --release --example integer_auth_e2e
 ```
 
-Expected output:
+Expected output (completes in 1-8 minutes):
 ```
 [1/5] Loading ONNX model...
 [2/5] Preprocessing JOLT prover...
 [3/5] Preparing authorization inputs...
 [4/5] Generating JOLT Atlas proof...
-      ✓ Proof generated in ~700ms
-[5/5] Verifying proof...
-      ✓ Proof verified!
+      ✓ Proof generated (5-10 seconds)
+[5/5] Verifying proof cryptographically...
+      ✓ Proof verified! (40 seconds - 7.5 minutes)
 
 ║  ✅ Transaction AUTHORIZED via ZK proof
 ```
+
+**Note**: Full cryptographic verification takes 1-8 minutes depending on model complexity. This ensures complete verification of the zero-knowledge proof.
 
 ### 4. Start Web UI
 
@@ -77,7 +79,8 @@ Open http://localhost:3000 in your browser (or https://zk-x402.com for productio
    - Velocity 24h: 100
    - Vendor Trust: 80
 4. Click "Generate Proof"
-5. See result: **APPROVED** ✅
+5. Wait 1-6.5 minutes for cryptographic verification
+6. See result: **APPROVED** ✅
 
 ### Via API
 
@@ -99,14 +102,15 @@ curl -X POST https://zk-x402.com/api/generate-proof \
 # Local development: http://localhost:3001/api/generate-proof
 ```
 
-Response:
+Response (arrives after 1-6.5 minutes):
 ```json
 {
   "approved": true,
   "output": 100,
   "verification": true,
   "proofSize": "15.2 KB",
-  "verificationTime": "45ms",
+  "provingTime": "6600ms",
+  "verificationTime": "370900ms",
   "operations": 21,
   "zkmlProof": {
     "commitment": "0x...",
@@ -116,15 +120,19 @@ Response:
 }
 ```
 
+**Note**: `verificationTime` includes complete cryptographic validation (40s - 7.5 minutes). This ensures the proof is cryptographically sound.
+
 ## Available Models
 
-| Model | Type | Proving Time | Description |
-|-------|------|--------------|-------------|
-| `simple_auth` | Rule-based | ~0.7s | Basic threshold checks |
-| `neural_auth` | Neural network | ~1.5s | ML-based risk scoring |
-| `comparison_demo` | Demo | ~0.3s | Comparison operations showcase |
-| `tensor_ops_demo` | Demo | ~0.3s | Tensor operations showcase |
-| `matmult_1d_demo` | Demo | ~0.4s | Matrix multiplication demo |
+| Model | Type | Total Time | Description |
+|-------|------|------------|-------------|
+| `simple_threshold` | Rule-based | 1-6.5 min | Basic threshold checks |
+| `risk_neural` | Neural network | 5-8 min | ML-based risk scoring |
+| `multi_factor` | Multi-criteria | 5-8 min | Comprehensive authorization |
+| `velocity_1h` | Rate limiting | 1-5 min | Hourly spending caps |
+| `composite_scoring` | Weighted scoring | 5-8 min | Advanced risk assessment |
+
+**Time includes**: Proof generation (5-10s) + cryptographic verification (40s - 7.5 minutes)
 
 ## Authorization Logic
 
@@ -143,12 +151,26 @@ ML model trained on transaction patterns:
 - Architecture: [5] → [8 hidden] → [4 hidden] → [1 output]
 - Output > 0.5 = APPROVED
 
+## Understanding Proof Times
+
+zkX402 performs comprehensive cryptographic verification to ensure proofs are valid:
+
+- **Proof Generation**: 5-10 seconds (create the zero-knowledge proof)
+- **Verification**: 40 seconds - 7.5 minutes (cryptographically validate the proof)
+- **Total Time**: 1-8 minutes from request to verified result
+
+**Why verification takes time**: The JOLT Atlas enhancements (Gather, Div, Cast, larger tensors) enable sophisticated authorization policies. Cryptographic verification of these enhanced capabilities requires thorough sumcheck validation.
+
+**Best for**: Batch processing, overnight settlement, compliance reporting, high-value transactions, scheduled workflows.
+
+**For instant testing**: Use `/api/policies/:id/simulate` endpoint (<1ms, no proof generation).
+
 ## Next Steps
 
 - **Create Custom Policy**: See `policy-examples/onnx/README.md`
 - **Run Tests**: `npm test` (UI), `cargo test` (Rust)
 - **Deploy**: See `DEPLOYMENT.md`
-- **API Integration**: See `API_REFERENCE.md`
+- **API Integration**: See `API_REFERENCE.md` for async patterns and webhooks
 
 ## Troubleshooting
 

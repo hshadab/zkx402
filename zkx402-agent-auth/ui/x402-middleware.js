@@ -33,7 +33,9 @@ const CURATED_MODELS = {
     price: '1000', // 0.01 USDC (atomic units)
     useCase: 'Basic wallet balance checks',
     operations: 6,
-    proofTime: '6.6s'
+    proofTime: '1-6.5 min',  // Total: proof generation (6.6s) + verification (1-6 min)
+    provingTime: '6.6s',
+    verificationTime: '1-6 min'
   },
   percentage_limit: {
     file: 'curated/percentage_limit_no_div.onnx',
@@ -44,7 +46,9 @@ const CURATED_MODELS = {
     price: '1500',
     useCase: 'Percentage-based spending limits',
     operations: 20,
-    proofTime: '~7s'
+    proofTime: '1-6 min',  // Total: proof generation (~7s) + verification (1-6 min)
+    provingTime: '~7s',
+    verificationTime: '1-6 min'
   },
   vendor_trust: {
     file: 'curated/vendor_trust.onnx',
@@ -55,7 +59,9 @@ const CURATED_MODELS = {
     price: '1000',
     useCase: 'Marketplace vendor verification',
     operations: 5,
-    proofTime: '~5s'
+    proofTime: '1-6 min',  // Total: proof generation (~5s) + verification (1-6 min)
+    provingTime: '~5s',
+    verificationTime: '1-6 min'
   },
   velocity_1h: {
     file: 'curated/velocity_1h.onnx',
@@ -66,7 +72,9 @@ const CURATED_MODELS = {
     price: '2000',
     useCase: 'Hourly rate limiting',
     operations: 8,
-    proofTime: '6.4s'
+    proofTime: '1-5 min',  // Total: proof generation (6.4s) + verification (40s-4 min)
+    provingTime: '6.4s',
+    verificationTime: '40s-4 min'
   },
   velocity_24h: {
     file: 'curated/velocity_24h.onnx',
@@ -77,7 +85,9 @@ const CURATED_MODELS = {
     price: '2000',
     useCase: 'Daily spending caps',
     operations: 8,
-    proofTime: '6.2s'
+    proofTime: '1-5 min',  // Total: proof generation (6.2s) + verification (40s-4 min)
+    provingTime: '6.2s',
+    verificationTime: '40s-4 min'
   },
   daily_limit: {
     file: 'curated/daily_limit.onnx',
@@ -88,7 +98,9 @@ const CURATED_MODELS = {
     price: '2000',
     useCase: 'Budget enforcement',
     operations: 8,
-    proofTime: '8.4s'
+    proofTime: '1-5 min',  // Total: proof generation (8.4s) + verification (1-4 min)
+    provingTime: '8.4s',
+    verificationTime: '1-4 min'
   },
   age_gate: {
     file: 'curated/age_gate.onnx',
@@ -99,7 +111,9 @@ const CURATED_MODELS = {
     price: '1000',
     useCase: 'Age-restricted purchases',
     operations: 5,
-    proofTime: '~5s'
+    proofTime: '1-6 min',  // Total: proof generation (~5s) + verification (1-6 min)
+    provingTime: '~5s',
+    verificationTime: '1-6 min'
   },
   multi_factor: {
     file: 'curated/multi_factor.onnx',
@@ -110,7 +124,9 @@ const CURATED_MODELS = {
     price: '5000',
     useCase: 'High-security transactions',
     operations: 17,
-    proofTime: '6.2s'
+    proofTime: '5-8 min',  // Total: proof generation (6.2s) + verification (5-7.5 min)
+    provingTime: '6.2s',
+    verificationTime: '5-7.5 min'
   },
   composite_scoring: {
     file: 'curated/composite_scoring_no_div.onnx',
@@ -121,7 +137,9 @@ const CURATED_MODELS = {
     price: '4000',
     useCase: 'Advanced risk assessment',
     operations: 32,
-    proofTime: '~8s'
+    proofTime: '5-8 min',  // Total: proof generation (~8s) + verification (5-7 min)
+    provingTime: '~8s',
+    verificationTime: '5-7 min'
   },
   risk_neural: {
     file: 'curated/risk_neural_no_div.onnx',
@@ -132,7 +150,9 @@ const CURATED_MODELS = {
     price: '6000',
     useCase: 'Sophisticated fraud detection',
     operations: 46,
-    proofTime: '~8s'
+    proofTime: '5-8 min',  // Total: proof generation (~8s) + verification (5-7 min)
+    provingTime: '~8s',
+    verificationTime: '5-7 min'
   },
   // Test models for operation verification
   test_less: {
@@ -144,7 +164,9 @@ const CURATED_MODELS = {
     price: '500',
     useCase: 'Operation verification',
     operations: 3,
-    proofTime: '~4s'
+    proofTime: '1-5 min',  // Total: proof generation (~4s) + verification (1-5 min)
+    provingTime: '~4s',
+    verificationTime: '1-5 min'
   },
   test_identity: {
     file: 'curated/test_identity.onnx',

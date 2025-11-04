@@ -95,14 +95,15 @@ Generate a zero-knowledge proof for agent authorization.
   - `velocity_24h` (string): 24-hour spending velocity
   - `vendor_trust` (string): Vendor trust score (0-100)
 
-**Response (Success):**
+**Response (Success - arrives after 1-8 minutes):**
 ```json
 {
   "approved": true,
   "output": 100,
   "verification": true,
   "proofSize": "15.2 KB",
-  "verificationTime": "45ms",
+  "provingTime": "6600ms",
+  "verificationTime": "370900ms",
   "operations": 21,
   "zkmlProof": {
     "commitment": "0x1a2b3c...",
@@ -112,12 +113,15 @@ Generate a zero-knowledge proof for agent authorization.
 }
 ```
 
+**Note**: Response takes 1-8 minutes due to comprehensive cryptographic verification.
+
 **Response Schema:**
 - `approved` (boolean): Whether transaction is authorized
 - `output` (number): Raw model output value
 - `verification` (boolean): Whether proof verified successfully
 - `proofSize` (string): Estimated proof size
-- `verificationTime` (string): Time to verify proof
+- `provingTime` (string): Time to generate proof (5-10 seconds)
+- `verificationTime` (string): Time to verify proof cryptographically (40s - 7.5 minutes)
 - `operations` (number): Number of ONNX operations in trace
 - `zkmlProof` (object): Zero-knowledge proof components
   - `commitment` (string): Cryptographic commitment
@@ -138,8 +142,11 @@ Generate a zero-knowledge proof for agent authorization.
 - `500`: Proof generation error
 
 **Timeout:**
-- Default: 120 seconds
-- Adjust with `timeout` query parameter: `/generate-proof?timeout=180000`
+- Recommended: 600 seconds (10 minutes)
+- Total time: 1-8 minutes for proof generation + cryptographic verification
+- Adjust with `timeout` query parameter: `/generate-proof?timeout=600000`
+
+**Why it takes minutes**: The JOLT Atlas enhancements (Gather, Div, Cast, larger tensors) enable sophisticated authorization models. Comprehensive cryptographic verification of these enhanced capabilities requires thorough Spartan sumcheck validation (40s - 7.5 minutes).
 
 ---
 
@@ -176,7 +183,7 @@ async function authorizeTransaction(amount, balance, velocity_1h, velocity_24h, 
     // Production: https://zk-x402.com/api/generate-proof
     // Local: http://localhost:3001/api/generate-proof
     const response = await axios.post('https://zk-x402.com/api/generate-proof', {
-      model: 'simple_auth',
+      model: 'simple_threshold',
       inputs: {
         amount: amount.toString(),
         balance: balance.toString(),
@@ -184,6 +191,8 @@ async function authorizeTransaction(amount, balance, velocity_1h, velocity_24h, 
         velocity_24h: velocity_24h.toString(),
         vendor_trust: vendor_trust.toString()
       }
+    }, {
+      timeout: 600000  // 10 minutes to accommodate cryptographic verification
     });
 
     if (response.data.approved && response.data.verification) {
@@ -212,16 +221,19 @@ import requests
 def authorize_transaction(amount, balance, velocity_1h, velocity_24h, vendor_trust):
     # Production: https://zk-x402.com/api/generate-proof
     # Local: http://localhost:3001/api/generate-proof
-    response = requests.post('https://zk-x402.com/api/generate-proof', json={
-        'model': 'simple_auth',
-        'inputs': {
-            'amount': str(amount),
-            'balance': str(balance),
-            'velocity_1h': str(velocity_1h),
-            'velocity_24h': str(velocity_24h),
-            'vendor_trust': str(vendor_trust)
-        }
-    })
+    response = requests.post('https://zk-x402.com/api/generate-proof',
+        json={
+            'model': 'simple_threshold',
+            'inputs': {
+                'amount': str(amount),
+                'balance': str(balance),
+                'velocity_1h': str(velocity_1h),
+                'velocity_24h': str(velocity_24h),
+                'vendor_trust': str(vendor_trust)
+            }
+        },
+        timeout=600  # 10 minutes for cryptographic verification
+    )
 
     if response.status_code == 200:
         result = response.json()
@@ -248,8 +260,9 @@ authorize_transaction(50, 1000, 20, 100, 80)
 # Approved transaction (Production)
 curl -X POST https://zk-x402.com/api/generate-proof \
   -H "Content-Type: application/json" \
+  --max-time 600 \
   -d '{
-    "model": "simple_auth",
+    "model": "simple_threshold",
     "inputs": {
       "amount": "50",
       "balance": "1000",
@@ -259,11 +272,14 @@ curl -X POST https://zk-x402.com/api/generate-proof \
     }
   }' | jq '.approved'
 
+# Note: Response arrives in 1-6.5 minutes due to cryptographic verification
+
 # Rejected transaction (excessive amount)
 curl -X POST https://zk-x402.com/api/generate-proof \
   -H "Content-Type: application/json" \
+  --max-time 600 \
   -d '{
-    "model": "simple_auth",
+    "model": "simple_threshold",
     "inputs": {
       "amount": "200",
       "balance": "1000",
@@ -300,9 +316,9 @@ app.use('/api/generate-proof', limiter);
 | Error | Cause | Solution |
 |-------|-------|----------|
 | `Model not found` | ONNX file missing | Run `python3 create_demo_models.py` |
-| `Invalid inputs` | Missing or malformed inputs | Check all 5 inputs are provided |
+| `Invalid inputs` | Missing or malformed inputs | Check all required inputs are provided |
 | `Proof generation failed` | Rust prover error | Check Rust build with `cargo build --release` |
-| `Timeout` | Proof took too long | Increase timeout or use simpler model |
+| `Timeout` | Verification takes 1-8 minutes | Set timeout to 600 seconds (10 minutes) |
 
 ### Error Response Format
 
@@ -316,20 +332,24 @@ All errors return this structure:
 
 ## Performance
 
-### Typical Response Times
+### Response Times
 
-| Model | Proof Generation | Verification | Total |
-|-------|------------------|--------------|-------|
-| `simple_auth` | 700ms | 45ms | ~750ms |
-| `neural_auth` | 1500ms | 65ms | ~1.6s |
-| `comparison_demo` | 300ms | 30ms | ~330ms |
+| Model | Proof Generation | Verification | **Total Time** |
+|-------|------------------|--------------|----------------|
+| `simple_threshold` | 5-7s | 1-6 minutes | **1-6.5 minutes** |
+| `velocity_1h` | 6-8s | 40s-4 minutes | **1-5 minutes** |
+| `risk_neural` | 8-10s | 4-7.5 minutes | **5-8 minutes** |
+| `multi_factor` | 6-8s | 5-7.5 minutes | **5-8 minutes** |
+| `composite_scoring` | 8-10s | 5-7 minutes | **5-8 minutes** |
 
-### Optimization Tips
+**Why verification takes minutes**: The JOLT Atlas enhancements (Gather, Div, Cast, larger tensors) enable sophisticated authorization models. Cryptographic verification requires comprehensive Spartan sumcheck validation.
 
-1. **Caching**: Cache proofs for identical inputs
-2. **Batching**: Process multiple authorizations in parallel
-3. **Model Selection**: Use simpler models when possible
-4. **Hardware**: Proof generation is CPU-intensive, scale horizontally
+### Integration Patterns
+
+1. **Async Workflows**: Use webhooks for non-blocking proof generation
+2. **Batch Processing**: Generate proofs overnight for scheduled transactions
+3. **Pre-Computation**: Generate proofs in advance for predictable authorization needs
+4. **Simulation First**: Use `/api/policies/:id/simulate` (<1ms) for testing before proof generation
 
 ## Security Considerations
 

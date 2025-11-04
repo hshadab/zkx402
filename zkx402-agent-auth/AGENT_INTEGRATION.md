@@ -74,8 +74,8 @@ curl -X POST https://your-server.com/api/policies/simple_threshold/simulate \
   "note": "This is a simulation without zkML proof. Use /api/generate-proof to get a verifiable proof.",
   "proof_generation": {
     "endpoint": "https://your-server.com/api/generate-proof",
-    "estimated_time": "~0.5s",
-    "estimated_cost": "0.0001"
+    "estimated_time": "1-8 minutes",
+    "estimated_cost": "0.01"
   }
 }
 ```
@@ -245,69 +245,69 @@ The UI displays only the 4 featured models to highlight advanced zkML capabiliti
 - **Inputs**: `amount`, `balance`
 - **Logic**: Approve if amount < balance
 - **Use case**: Simple spending authorization
-- **Performance**: ~0.5s proof time
+- **Performance**: 1-6.5 minutes total time
 
 **percentage_limit** - Percentage-based spending cap
 - **Inputs**: `amount`, `balance`, `max_percentage`
 - **Logic**: Approve if amount < (balance * max_percentage / 100)
 - **Use case**: Limit spending to % of available funds
-- **Performance**: ~1.1s proof time
+- **Performance**: 1-6 minutes total time
 
 **velocity_1h** - Hourly spending velocity
 - **Inputs**: `amount`, `spent_1h`, `limit_1h`
 - **Logic**: Approve if (spent_1h + amount) < limit_1h
-- **Use case**: Rate limiting for high-frequency trading
-- **Performance**: ~1.2s proof time
+- **Use case**: Rate limiting for batch transaction processing
+- **Performance**: 1-5 minutes total time
 
 **velocity_24h** - Daily spending velocity
 - **Inputs**: `amount`, `spent_24h`, `limit_24h`
 - **Logic**: Approve if (spent_24h + amount) < limit_24h
-- **Use case**: Daily spending caps
-- **Performance**: ~1.2s proof time
+- **Use case**: Daily spending caps for scheduled workflows
+- **Performance**: 1-5 minutes total time
 
 **daily_limit** - Daily spending cap
 - **Inputs**: `amount`, `daily_spent`, `daily_cap`
 - **Logic**: Approve if (daily_spent + amount) < daily_cap
-- **Use case**: Budget enforcement
-- **Performance**: ~1.2s proof time
+- **Use case**: Budget enforcement in overnight processing
+- **Performance**: 1-5 minutes total time
 
 ### Trust & Reputation
 
 **vendor_trust** - Vendor reputation check
 - **Inputs**: `vendor_trust`, `min_trust`
 - **Logic**: Approve if vendor_trust >= min_trust
-- **Use case**: Whitelist high-trust vendors
-- **Performance**: ~0.6s proof time
+- **Use case**: Whitelist high-trust vendors in batch procurement
+- **Performance**: 1-6 minutes total time
 
 ### Access Control
 
 **age_gate** - Age verification
 - **Inputs**: `age`, `min_age`
 - **Logic**: Approve if age >= min_age
-- **Use case**: Age-restricted services
-- **Performance**: ~0.6s proof time
+- **Use case**: Age-restricted services with async verification
+- **Performance**: 1-6 minutes total time
 
 ### Multi-Factor Policies
 
 **multi_factor** - Combined financial + trust checks
 - **Inputs**: `amount`, `balance`, `spent_24h`, `limit_24h`, `vendor_trust`, `min_trust`
 - **Logic**: Balance sufficient AND velocity within limits AND vendor trusted
-- **Use case**: Comprehensive transaction authorization
-- **Performance**: ~4.1s proof time
+- **Use case**: Comprehensive authorization for high-value transactions
+- **Performance**: 5-8 minutes total time
 
 **composite_scoring** - Weighted scoring model
 - **Inputs**: `amount`, `balance`, `vendor_trust`, `user_history`
 - **Logic**: Weighted combination of multiple factors
-- **Use case**: Risk-based authorization
-- **Performance**: ~2.8s proof time
+- **Use case**: Risk-based authorization with flexible timing
+- **Performance**: 5-8 minutes total time
 
 ### Neural Network Policies
 
 **risk_neural** - ML-based risk scoring
 - **Inputs**: `amount`, `balance`, `velocity_1h`, `velocity_24h`, `vendor_trust`
 - **Logic**: Trained neural network (8→4 hidden layers)
-- **Use case**: Complex pattern recognition for fraud detection
-- **Performance**: ~8.7s proof time
+- **Use case**: Complex pattern recognition for scheduled fraud detection
+- **Performance**: 5-8 minutes total time
 
 ## Integration Patterns
 
@@ -427,10 +427,10 @@ async def generate_proof(session, model_id, inputs):
 - `int8`, `int16`, `int32`
 - `float32` (converted to scaled integers internally)
 
-**Proof Generation Times:**
-- Simple policies (2-10 ops): 0.5-1.5s
-- Medium policies (11-30 ops): 1.5-4s
-- Complex policies (31-100 ops): 4-9s
+**Proof Generation & Verification Times:**
+- Simple policies (2-10 ops): 1-6.5 minutes (includes cryptographic verification)
+- Medium policies (11-30 ops): 1-5 minutes (includes cryptographic verification)
+- Complex policies (31-100 ops): 5-8 minutes (includes cryptographic verification)
 
 ### Payment Requirements
 
@@ -499,8 +499,8 @@ async def generate_proof(session, model_id, inputs):
 
 ### 4. Monitor Performance
 - Track proof generation times
-- Set timeouts (recommend 15s for complex policies)
-- Fall back to simpler policies on timeout
+- Set timeouts (recommend 10 minutes to accommodate cryptographic verification)
+- Use async workflows with webhooks for optimal experience
 
 ### 5. Optimize for Cost
 - Batch similar transactions when possible
