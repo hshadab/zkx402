@@ -79,12 +79,38 @@ export default function LoadingIndicator({ message = 'Generating proof...', stag
         </div>
       </div>
 
-      {/* Progress bar */}
-      <div className="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
-        <div
-          className="bg-gradient-to-r from-green-600 to-green-400 h-full transition-all duration-300"
-          style={{ width: `${getProgress()}%` }}
-        ></div>
+      {/* Progress Bar with Percentage */}
+      <div className="mb-4">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-sm font-mono text-gray-400">Progress</span>
+          <span className="text-lg font-bold font-mono text-green-400">
+            {Math.round(getProgress())}%
+          </span>
+        </div>
+        <div className="w-full bg-gray-800 rounded-full h-4 overflow-hidden border border-gray-700">
+          <div
+            className="bg-gradient-to-r from-green-600 via-green-500 to-green-400 h-full transition-all duration-300 flex items-center justify-end pr-2"
+            style={{ width: `${getProgress()}%` }}
+          >
+            {getProgress() > 10 && (
+              <span className="text-xs font-bold text-white drop-shadow-lg">
+                {Math.round(getProgress())}%
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Current Stage Status Bar */}
+      <div className="mb-4 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+            <span className="text-sm font-mono text-gray-300">
+              Currently: <span className="text-green-400 font-semibold">{stage || getCurrentStage()}</span>
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Stage indicators - hidden on mobile to save space */}
