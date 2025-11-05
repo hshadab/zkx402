@@ -28,11 +28,11 @@ export default function LoadingIndicator({ message = 'Generating proof...', stag
   }, []);
 
   const stages = [
-    { name: 'Loading model', duration: 0.5 },
-    { name: 'Preprocessing prover', duration: 1.0 },
-    { name: 'Preparing inputs', duration: 0.2 },
-    { name: 'Generating proof', duration: 2.0 },
-    { name: 'Verifying proof', duration: 0.3 },
+    { name: 'Loading model', duration: 2 },
+    { name: 'Preprocessing prover', duration: 3 },
+    { name: 'Preparing inputs', duration: 1 },
+    { name: 'Generating proof', duration: 8 },      // 5-10 seconds actual
+    { name: 'Verifying proof', duration: 240 },     // 40s-7.5min actual (use 4min average)
   ];
 
   const getCurrentStage = () => {
@@ -52,25 +52,30 @@ export default function LoadingIndicator({ message = 'Generating proof...', stag
   };
 
   return (
-    <div className="bg-gray-900 rounded-lg p-8 border-2 border-green-500/50">
+    <div className="bg-gray-900 rounded-lg p-4 sm:p-8 border-2 border-green-500/50">
       {/* Spinner */}
-      <div className="flex justify-center mb-6">
+      <div className="flex justify-center mb-4 sm:mb-6">
         <div className="relative">
-          <div className="w-20 h-20 border-4 border-gray-700 rounded-full"></div>
-          <div className="absolute top-0 left-0 w-20 h-20 border-4 border-green-500 rounded-full border-t-transparent animate-spin"></div>
+          <div className="w-16 h-16 sm:w-20 sm:h-20 border-4 border-gray-700 rounded-full"></div>
+          <div className="absolute top-0 left-0 w-16 h-16 sm:w-20 sm:h-20 border-4 border-green-500 rounded-full border-t-transparent animate-spin"></div>
         </div>
       </div>
 
       {/* Message */}
-      <div className="text-center mb-6">
-        <div className="text-2xl font-bold text-green-400 font-mono mb-2">
+      <div className="text-center mb-4 sm:mb-6">
+        <div className="text-lg sm:text-2xl font-bold text-green-400 font-mono mb-2">
           {message}{dots}
         </div>
-        <div className="text-sm text-gray-400 font-mono">
+        <div className="text-xs sm:text-sm text-gray-400 font-mono">
           {stage || getCurrentStage()}
         </div>
         <div className="text-xs text-gray-500 font-mono mt-2">
           {elapsed}s elapsed
+          {elapsed > 60 && (
+            <span className="ml-2 text-green-400">
+              ({Math.floor(elapsed / 60)}m {elapsed % 60}s)
+            </span>
+          )}
         </div>
       </div>
 
@@ -82,8 +87,8 @@ export default function LoadingIndicator({ message = 'Generating proof...', stag
         ></div>
       </div>
 
-      {/* Stage indicators */}
-      <div className="mt-6 flex justify-between">
+      {/* Stage indicators - hidden on mobile to save space */}
+      <div className="mt-4 sm:mt-6 hidden sm:flex justify-between">
         {stages.map((s, i) => {
           const isActive = getCurrentStage() === s.name;
           const isDone = stages.findIndex(stage => stage.name === getCurrentStage()) > i;
@@ -111,12 +116,21 @@ export default function LoadingIndicator({ message = 'Generating proof...', stag
         })}
       </div>
 
-      {/* Tips */}
-      <div className="mt-6 p-4 bg-gray-800 rounded border border-gray-700">
-        <div className="text-xs text-gray-400 font-mono space-y-1">
-          <div>💡 <span className="text-gray-300">Proof generation typically takes 0.7-3s depending on model complexity</span></div>
-          <div>🔒 <span className="text-gray-300">Your private data (balance, velocity) is never revealed in the proof</span></div>
-          <div>✓ <span className="text-gray-300">Proof will be cryptographically verified before being returned</span></div>
+      {/* Tips - mobile optimized */}
+      <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-gray-800 rounded border border-gray-700">
+        <div className="text-xs text-gray-400 font-mono space-y-1.5 sm:space-y-1">
+          <div className="flex items-start gap-2">
+            <span className="flex-shrink-0">⏱️</span>
+            <span className="text-gray-300">Proof generation + verification takes 1-8 minutes</span>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="flex-shrink-0">🔒</span>
+            <span className="text-gray-300">Your private data is never revealed</span>
+          </div>
+          <div className="flex items-start gap-2 hidden sm:flex">
+            <span className="flex-shrink-0">✓</span>
+            <span className="text-gray-300">Comprehensive cryptographic verification ensures proof validity</span>
+          </div>
         </div>
       </div>
     </div>

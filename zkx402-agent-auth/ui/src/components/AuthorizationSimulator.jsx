@@ -53,9 +53,12 @@ export default function AuthorizationSimulator({ modelType, onProofGenerated, is
       })
 
       // Call backend API with converted inputs
+      // Set 10-minute timeout for proof generation + verification (1-8 minutes actual)
       const response = await axios.post('/api/generate-proof', {
         model: modelType,
         inputs: convertedInputs
+      }, {
+        timeout: 600000  // 10 minutes in milliseconds
       })
 
       const proofTime = Date.now() - startTime
@@ -190,6 +193,27 @@ export default function AuthorizationSimulator({ modelType, onProofGenerated, is
             ))}
           </div>
         </div>
+
+        {/* Proof Generation Time Warning */}
+        {!isGenerating && (
+          <div className="mt-6 p-4 bg-yellow-900/20 border border-yellow-600/30 rounded-lg">
+            <div className="flex items-start gap-3">
+              <div className="text-yellow-500 text-xl mt-0.5">⏱️</div>
+              <div className="flex-1">
+                <div className="text-sm font-semibold text-yellow-300 mb-1">
+                  This will take 1-8 minutes to complete
+                </div>
+                <div className="text-xs text-gray-300 space-y-1">
+                  <div>• Proof generation: 5-10 seconds</div>
+                  <div>• Cryptographic verification: 40s-7.5 minutes</div>
+                  <div className="mt-2 text-gray-400">
+                    💡 Best for batch processing, compliance reporting, and high-value transactions
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Generate Proof Button */}
         <div className="pt-4">
