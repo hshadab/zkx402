@@ -3,6 +3,23 @@ import React from 'react'
 export default function PerformanceMetrics({ proofData }) {
   const { proofTime, proofSize = 'N/A', verificationTime = 'N/A' } = proofData
 
+  // Format verification time: convert "4774ms" to "4.77s"
+  const formatVerificationTime = (time) => {
+    if (time === 'N/A' || !time) return 'N/A'
+
+    // If it's already a string like "1-6 min", return as-is
+    if (typeof time === 'string' && !time.includes('ms')) return time
+
+    // Parse milliseconds from string like "4774ms"
+    const msMatch = time.match(/(\d+)ms/)
+    if (msMatch) {
+      const ms = parseInt(msMatch[1])
+      return `${(ms / 1000).toFixed(2)}s`
+    }
+
+    return time
+  }
+
   const metrics = [
     {
       label: 'Proof Generation',
@@ -18,7 +35,7 @@ export default function PerformanceMetrics({ proofData }) {
     },
     {
       label: 'Verification Time',
-      value: verificationTime,
+      value: formatVerificationTime(verificationTime),
       description: 'Time to verify proof',
       color: 'accent-purple'
     },
