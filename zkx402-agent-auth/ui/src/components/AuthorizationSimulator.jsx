@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { getModel, getInputConfig, formatInputValue } from '../utils/curatedModels'
+import LoadingIndicator from './LoadingIndicator'
 
 export default function AuthorizationSimulator({ modelType, onProofGenerated, isGenerating, setIsGenerating }) {
   const model = getModel(modelType)
@@ -215,65 +216,43 @@ export default function AuthorizationSimulator({ modelType, onProofGenerated, is
           </div>
         )}
 
-        {/* Generate Proof Button */}
-        <div className="pt-4">
-          <button
-            onClick={generateProof}
-            disabled={isGenerating || !model.inputs.every(input => inputs[input])}
-            className={`btn-primary w-full md:w-auto relative transition-all duration-300 ${
-              isGenerating ? 'animate-pulse shadow-lg shadow-accent-green/50' : ''
-            }`}
-          >
-            {isGenerating ? (
-              <>
-                <svg
-                  className="inline-block w-5 h-5 mr-3 animate-spin"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-                <span className="font-semibold">Generating zkML Proof...</span>
-              </>
-            ) : (
-              <>
-                <svg
-                  className="inline-block w-5 h-5 mr-2"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                  />
-                </svg>
-                Generate Zero-Knowledge Proof
-              </>
+        {/* Generate Proof Button or Loading Indicator */}
+        {isGenerating ? (
+          <div className="mt-6">
+            <LoadingIndicator
+              message="Generating zkML Proof"
+            />
+          </div>
+        ) : (
+          <div className="pt-4">
+            <button
+              onClick={generateProof}
+              disabled={!model.inputs.every(input => inputs[input])}
+              className="btn-primary w-full md:w-auto relative transition-all duration-300"
+            >
+              <svg
+                className="inline-block w-5 h-5 mr-2"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                />
+              </svg>
+              Generate Zero-Knowledge Proof
+            </button>
+            {!model.inputs.every(input => inputs[input]) && (
+              <p className="text-xs text-gray-500 mt-2">
+                Please fill in all input fields
+              </p>
             )}
-          </button>
-          {!model.inputs.every(input => inputs[input]) && (
-            <p className="text-xs text-gray-500 mt-2">
-              Please fill in all input fields
-            </p>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   )
