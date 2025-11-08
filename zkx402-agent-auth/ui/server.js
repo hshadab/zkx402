@@ -819,15 +819,6 @@ app.get('/openapi.json', (req, res) => {
   res.json(openapi);
 });
 
-// Serve AgentCard for AP2 discoverability
-app.get('/.well-known/agentcard', (req, res) => {
-  res.sendFile(path.join(__dirname, 'agentcard.json'));
-});
-
-app.get('/agentcard.json', (req, res) => {
-  res.sendFile(path.join(__dirname, 'agentcard.json'));
-});
-
 // Add cache stats endpoint
 app.get('/api/cache/stats', (req, res) => {
   try {

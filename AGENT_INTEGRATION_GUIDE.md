@@ -45,40 +45,7 @@ Returns service capabilities, pricing, and available authorization models.
 }
 ```
 
-### 2. Agent Payments Protocol (AP2) Discovery
-
-**AP2 AgentCard:**
-```http
-GET /.well-known/agentcard
-```
-
-Returns comprehensive agent metadata including pricing models, payment rails, and integration examples.
-
-**Response Preview:**
-```json
-{
-  "version": "2025.0",
-  "agent": {
-    "id": "zkx402-agent-auth",
-    "name": "zkX402 Agent Authorization Service",
-    "capabilities": ["zkml_proof_generation", "authorization_verification"],
-    "status": "production"
-  },
-  "pricing": {
-    "model": "pay_per_use",
-    "currency": "USDC",
-    "network": "base",
-    "services": [...]
-  },
-  "payment": {
-    "protocols": ["x402"],
-    "schemes": ["zkml-jolt"],
-    "networks": ["base-mainnet"]
-  }
-}
-```
-
-### 3. OpenAPI Specification
+### 2. OpenAPI Specification
 
 **Machine-Readable API Spec:**
 ```http
@@ -237,41 +204,31 @@ GET /.well-known/x402
 ```
 
 **Use for:**
-- Payment requirements
+- Service capabilities and status
+- Payment requirements and pricing
 - Supported schemes/networks
-- Pricing information
 - Endpoint discovery
+- Available authorization models
 
-### 2. AP2 AgentCard
+**This is the primary discovery mechanism for service APIs using x402.**
 
-**Standard:** [Google Agent Payments Protocol](https://agentpaymentsprotocol.info/)
-
-```
-GET /.well-known/agentcard
-```
-
-**Use for:**
-- Full agent capabilities
-- Pricing models
-- Integration examples
-- Compliance information
-
-### 3. OpenAPI Specification
+### 2. OpenAPI Specification
 
 **Standard:** [OpenAPI 3.0](https://swagger.io/specification/)
 
 ```
-GET /openapi.yaml
-GET /openapi.json
+GET /openapi.yaml  # YAML format
+GET /openapi.json  # JSON format
 ```
 
 **Use for:**
 - Programmatic API client generation
-- Type definitions
-- Complete API documentation
-- Testing/validation
+- Type definitions and schemas
+- Complete endpoint documentation
+- Request/response validation
+- Testing and integration
 
-### 4. Health Check
+### 3. Health Check
 
 ```
 GET /health
@@ -690,7 +647,6 @@ GET /api/cache/stats
 ### Standards Supported
 
 - ✅ **x402 Protocol** (Coinbase)
-- ✅ **AP2** (Google Agent Payments Protocol)
 - ✅ **OpenAPI 3.0**
 - ✅ **ERC-20** (USDC payments)
 - ✅ **ONNX** (model format)
