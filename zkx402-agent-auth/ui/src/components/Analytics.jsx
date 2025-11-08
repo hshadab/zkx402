@@ -5,13 +5,27 @@ export default function Analytics() {
   const [stats, setStats] = useState(null);
   const [modelBreakdown, setModelBreakdown] = useState(null);
   const [blockchainStats, setBlockchainStats] = useState(null);
+  const [paymentInfo, setPaymentInfo] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchAnalytics();
+    fetchPaymentInfo();
     const interval = setInterval(fetchAnalytics, 10000); // Refresh every 10s
     return () => clearInterval(interval);
   }, []);
+
+  const fetchPaymentInfo = async () => {
+    try {
+      const res = await fetch('/.well-known/x402');
+      if (res.ok) {
+        const data = await res.json();
+        setPaymentInfo(data.pricing);
+      }
+    } catch (error) {
+      console.error('Failed to fetch payment info:', error);
+    }
+  };
 
   const fetchAnalytics = async () => {
     try {
@@ -228,33 +242,39 @@ export default function Analytics() {
       {/* Payment Wallet Info */}
       <div className="bg-gradient-to-r from-dark-800 to-dark-700 rounded-lg shadow p-6 border border-accent-green/20">
         <h3 className="text-lg font-semibold text-white mb-3">Payment Wallet</h3>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-400">Address:</span>
-            <code className="text-sm font-mono bg-dark-900 text-accent-green px-2 py-1 rounded">
-              0x1f409E94684804e5158561090Ced8941B47B0CC6
-            </code>
+        {paymentInfo ? (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-400">Address:</span>
+              <code className="text-sm font-mono bg-dark-900 text-accent-green px-2 py-1 rounded">
+                {paymentInfo.wallet}
+              </code>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-400">Network:</span>
+              <span className="text-sm font-medium text-white">
+                {paymentInfo.network} (Chain ID: {paymentInfo.chainId})
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-400">Token:</span>
+              <span className="text-sm font-medium text-white">{paymentInfo.currency} (6 decimals)</span>
+            </div>
+            <div className="mt-4">
+              <a
+                href={`${paymentInfo.explorer}/address/${paymentInfo.wallet}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm text-accent-green hover:text-accent-green/80"
+              >
+                <TrendingUp className="w-4 h-4" />
+                View on BaseScan
+              </a>
+            </div>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-400">Network:</span>
-            <span className="text-sm font-medium text-white">Base Mainnet (Chain ID: 8453)</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-400">Token:</span>
-            <span className="text-sm font-medium text-white">USDC (6 decimals)</span>
-          </div>
-          <div className="mt-4">
-            <a
-              href="https://basescan.org/address/0x1f409E94684804e5158561090Ced8941B47B0CC6"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sm text-accent-green hover:text-accent-green/80"
-            >
-              <TrendingUp className="w-4 h-4" />
-              View on BaseScan
-            </a>
-          </div>
-        </div>
+        ) : (
+          <div className="text-sm text-gray-400">Loading payment info...</div>
+        )}
       </div>
     </div>
   );
