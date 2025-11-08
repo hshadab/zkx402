@@ -14,6 +14,10 @@ dist/
 .env.local
 .env.*.local
 
+# Wallet files (contain private keys)
+WALLET_SETUP.md
+**/WALLET_SETUP.md
+
 # IDE
 .vscode/
 .idea/

@@ -30,8 +30,8 @@ const ERC20_ABI = [
   'event Transfer(address indexed from, address indexed to, uint256 value)'
 ];
 
-// Your zkX402 payment wallet
-const PAYMENT_WALLET = '0x1f409E94684804e5158561090Ced8941B47B0CC6';
+// Your zkX402 payment wallet (configurable via environment variable)
+const PAYMENT_WALLET = process.env.PAYMENT_WALLET || '0x2b04D59EdC8Ddfc9b5190902BAf7a2857a103c91';
 
 /**
  * Initialize Base provider

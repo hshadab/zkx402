@@ -15,5 +15,13 @@ services:
         value: 10000
       - key: NODE_ENV
         value: production
+      - key: PAYMENT_WALLET
+        value: 0x2b04D59EdC8Ddfc9b5190902BAf7a2857a103c91
+      - key: LOG_LEVEL
+        value: info
+      - key: ENABLE_BLOCKCHAIN_MONITOR
+        value: true
+      - key: REDIS_ENABLED
+        value: false
     healthCheckPath: /health
     autoDeploy: true

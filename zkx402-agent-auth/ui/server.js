@@ -17,6 +17,9 @@ const { getPaymentInfo, formatPrice } = require('./base-payment');
 const { registerAgentRoutes, setBaseUrl } = require('./agent-api-routes');
 const webhookManager = require('./webhook-manager');
 const analyticsManager = require('./analytics-manager');
+const logger = require('./logger');
+const cache = require('./cache');
+
 // Gate blockchain monitor initialization behind env flag (default ON for compatibility)
 const ENABLE_BLOCKCHAIN_MONITOR = process.env.ENABLE_BLOCKCHAIN_MONITOR === '0' ? false : true;
 const blockchainMonitor = ENABLE_BLOCKCHAIN_MONITOR ? require('./blockchain-monitor') : null;
@@ -338,7 +341,7 @@ app.post('/x402/verify', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('[x402/verify] Error:', error);
+    logger.error('[x402/verify] Error', { error: error.message, stack: error.stack });
     res.status(500).json({
       isValid: false,
       invalidReason: `Verification error: ${error.message}`
@@ -432,7 +435,7 @@ function generateJoltProof(modelId, inputs) {
       const noDivFullPath = path.join(MODELS_DIR, noDivCandidate);
       if (fs.existsSync(noDivFullPath)) {
         modelRelPath = noDivCandidate;
-        console.log(`[Proof] Using division-free model variant for ${modelId}: ${noDivCandidate}`);
+        logger.info('Using division-free model variant', { modelId, variant: noDivCandidate });
       }
     }
 
@@ -468,12 +471,15 @@ function generateJoltProof(modelId, inputs) {
       ? `${envPrefix} ${JOLT_BINARY} "${modelPath}" ${inputArgs}`.trim()
       : `${envPrefix} cd ${JOLT_PROVER_DIR}/zkml-jolt-core && ${envPrefix} cargo run --release --example proof_json_output "${modelPath}" ${inputArgs}`.trim();
 
-    console.log(`[JOLT Atlas] Generating proof for ${modelId}: ${cargoCmd}`);
+    logger.info('Generating JOLT proof', { modelId, command: cargoCmd.substring(0, 150) });
 
     exec(cargoCmd, { maxBuffer: 1024 * 1024 * 10 }, (error, stdout, stderr) => {
       if (error) {
-        console.error('[JOLT] Proof generation error:', error);
-        console.error('[JOLT] stderr:', stderr);
+        logger.error('JOLT proof generation error', {
+          modelId,
+          error: error.message,
+          stderr: stderr.substring(0, 500)
+        });
         return reject(new Error(`Proof generation failed: ${error.message}`));
       }
 
@@ -490,7 +496,8 @@ function generateJoltProof(modelId, inputs) {
         // For authorization models: output=1 means approved, output=0 means denied
         const isApproved = result.output === 1;
 
-        console.log(`[JOLT] Proof generated for ${modelId}:`, {
+        logger.info('JOLT proof generated successfully', {
+          modelId,
           output: result.output,
           approved: isApproved,
           proving_time: result.proving_time
@@ -508,8 +515,11 @@ function generateJoltProof(modelId, inputs) {
           modelName: model.name
         });
       } catch (parseError) {
-        console.error('[JOLT] Failed to parse proof output:', parseError);
-        console.error('[JOLT] stdout:', stdout);
+        logger.error('Failed to parse JOLT proof output', {
+          modelId,
+          error: parseError.message,
+          stdout: stdout.substring(0, 500)
+        });
         reject(new Error(`Failed to parse proof output: ${parseError.message}`));
       }
     });
@@ -521,11 +531,13 @@ app.post('/api/generate-proof', uiProofLimiter, async (req, res) => {
     const { model: modelId, inputs, webhook_id } = req.body;
 
     if (!modelId) {
+      logger.warn('Proof generation request missing model ID', { ip: req.ip });
       return res.status(400).json({ error: 'Model ID required' });
     }
 
     const model = CURATED_MODELS[modelId];
     if (!model) {
+      logger.warn('Proof generation request for unknown model', { modelId, ip: req.ip });
       return res.status(404).json({ error: `Model not found: ${modelId}` });
     }
 
@@ -533,6 +545,11 @@ app.post('/api/generate-proof', uiProofLimiter, async (req, res) => {
     const inputObj = inputs || {};
     const missingInputs = model.inputs.filter(input => !Object.prototype.hasOwnProperty.call(inputObj, input));
     if (missingInputs.length > 0) {
+      logger.warn('Proof generation request with missing inputs', {
+        modelId,
+        missing: missingInputs,
+        ip: req.ip
+      });
       return res.status(400).json({
         error: 'Missing required inputs',
         missing: missingInputs,
@@ -557,15 +574,64 @@ app.post('/api/generate-proof', uiProofLimiter, async (req, res) => {
       webhookManager.createProofRequest(requestId, webhook_id, modelId, inputs);
     }
 
+    // Check cache first
+    const cachedProof = await cache.getProofFromCache(modelId, inputs);
+    if (cachedProof) {
+      logger.info('Returning cached proof', { modelId, requestId, ip: req.ip });
+
+      const result = {
+        ...cachedProof,
+        request_id: requestId,
+        cached: true,
+        x402Payment: {
+          header: encodePaymentResponse({
+            x402Version: 1,
+            scheme: 'zkml-jolt',
+            network: 'jolt-atlas',
+            payload: {
+              modelId,
+              zkmlProof: cachedProof
+            }
+          })
+        }
+      };
+
+      // Trigger webhook if configured
+      if (webhook_id) {
+        await webhookManager.completeProofRequest(requestId, result);
+      }
+
+      // Log to analytics
+      analyticsManager.logRequest({
+        endpoint: '/api/generate-proof',
+        method: 'POST',
+        modelId,
+        success: true,
+        responseTime: 0,
+        cached: true,
+        userAgent: req.headers['user-agent'],
+        ip: req.ip,
+        hasPaidHeader: !!req.headers['x402-paid']
+      });
+
+      return res.json(result);
+    }
+
+    logger.info('Generating new proof', { modelId, requestId, ip: req.ip });
+
     const startTime = Date.now();
     const proofData = await generateJoltProof(modelId, inputs);
     const proofTime = Date.now() - startTime;
+
+    // Store proof in cache
+    await cache.storeProofInCache(modelId, inputs, proofData);
 
     const result = {
       ...proofData,
       proofTime,
       inputs,
       request_id: requestId,
+      cached: false,
       x402Payment: {
         header: encodePaymentResponse({
           x402Version: 1,
@@ -591,15 +657,28 @@ app.post('/api/generate-proof', uiProofLimiter, async (req, res) => {
       modelId,
       success: true,
       responseTime: proofTime,
+      cached: false,
       userAgent: req.headers['user-agent'],
       ip: req.ip,
       hasPaidHeader: !!req.headers['x402-paid']
     });
 
+    logger.info('Proof generation completed', {
+      modelId,
+      requestId,
+      proofTime: `${proofTime}ms`,
+      approved: proofData.approved
+    });
+
     res.json(result);
 
   } catch (error) {
-    console.error('[API] Proof generation failed:', error);
+    logger.error('Proof generation failed', {
+      modelId: req.body.model,
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      ip: req.ip
+    });
 
     // Log failed request to analytics
     analyticsManager.logRequest({
@@ -615,7 +694,9 @@ app.post('/api/generate-proof', uiProofLimiter, async (req, res) => {
 
     res.status(500).json({
       error: 'Proof generation failed',
-      message: error.message
+      message: error.message,
+      // Hide stack trace in production
+      ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
     });
   }
 });
@@ -652,7 +733,7 @@ app.get('/api/analytics/stats', (req, res) => {
     const stats = analyticsManager.getStats();
     res.json(stats);
   } catch (error) {
-    console.error('[Analytics] Error getting stats:', error);
+    logger.error('Error getting analytics stats', { error: error.message });
     res.status(500).json({ error: 'Failed to get analytics stats' });
   }
 });
@@ -662,7 +743,7 @@ app.get('/api/analytics/models', (req, res) => {
     const breakdown = analyticsManager.getModelBreakdown();
     res.json(breakdown);
   } catch (error) {
-    console.error('[Analytics] Error getting model breakdown:', error);
+    logger.error('Error getting model breakdown', { error: error.message });
     res.status(500).json({ error: 'Failed to get model breakdown' });
   }
 });
@@ -673,7 +754,7 @@ app.get('/api/analytics/timeseries', (req, res) => {
     const timeseries = analyticsManager.getTimeSeries(hours);
     res.json(timeseries);
   } catch (error) {
-    console.error('[Analytics] Error getting timeseries:', error);
+    logger.error('Error getting timeseries', { error: error.message });
     res.status(500).json({ error: 'Failed to get timeseries data' });
   }
 });
@@ -687,7 +768,7 @@ app.get('/api/analytics/blockchain', async (req, res) => {
     const stats = await blockchainMonitor.getStats();
     res.json({ enabled: true, ...stats });
   } catch (error) {
-    console.error('[Blockchain] Error getting blockchain stats:', error);
+    logger.error('Error getting blockchain stats', { error: error.message });
     res.status(500).json({ error: 'Failed to get blockchain stats' });
   }
 });
@@ -702,7 +783,7 @@ registerAgentRoutes(app);
 // Serve static files from Vite build output
 const distPath = path.join(__dirname, 'dist');
 if (fs.existsSync(distPath)) {
-  console.log('[UI] Serving React UI from dist directory');
+  logger.info('Serving React UI from dist directory');
   app.use(express.static(distPath));
 
   // Serve index.html for all other routes (SPA fallback)
@@ -710,7 +791,7 @@ if (fs.existsSync(distPath)) {
     res.sendFile(path.join(distPath, 'index.html'));
   });
 } else {
-  console.log('[UI] No dist directory found - UI not built yet. Run "npm run build" to build the UI.');
+  logger.warn('No dist directory found - UI not built yet');
   app.get('*', (req, res) => {
     res.status(503).json({
       error: 'UI not available',
@@ -724,9 +805,49 @@ if (fs.existsSync(distPath)) {
   });
 }
 
+// Add cache stats endpoint
+app.get('/api/cache/stats', (req, res) => {
+  try {
+    const stats = cache.getCacheStats();
+    res.json(stats);
+  } catch (error) {
+    logger.error('Error getting cache stats', { error: error.message });
+    res.status(500).json({ error: 'Failed to get cache stats' });
+  }
+});
+
+// Clear cache endpoint (admin)
+app.post('/api/cache/clear', async (req, res) => {
+  try {
+    const { modelId } = req.body;
+    let deletedCount;
+
+    if (modelId) {
+      deletedCount = await cache.clearModelCache(modelId);
+      logger.info('Cache cleared for model', { modelId, deletedCount });
+    } else {
+      deletedCount = await cache.clearAllCache();
+      logger.info('All cache cleared', { deletedCount });
+    }
+
+    res.json({
+      success: true,
+      deletedCount,
+      modelId: modelId || 'all'
+    });
+  } catch (error) {
+    logger.error('Error clearing cache', { error: error.message });
+    res.status(500).json({ error: 'Failed to clear cache' });
+  }
+});
+
 // ========== START SERVER ==========
-app.listen(PORT, () => {
-  console.log(`
+async function startServer() {
+  // Initialize Redis cache
+  await cache.initializeRedis();
+
+  app.listen(PORT, () => {
+    logger.info(`
 ╔═══════════════════════════════════════════════════════════╗
 ║                   zkX402 API Server                       ║
 ║          Verifiable Agent Authorization (x402)            ║
@@ -749,8 +870,35 @@ Standard Endpoints:
   POST /api/generate-proof      - Generate zkML proof
   POST /api/upload-model        - Upload custom model
   GET  /health                  - Health check
+  GET  /api/cache/stats         - Cache statistics
 
 Documentation: https://github.com/hshadab/zkx402
 Payment Guide: https://github.com/hshadab/zkx402/blob/main/zkx402-agent-auth/PAYMENT_GUIDE.md
-  `);
+    `);
+
+    logger.info('zkX402 server started', {
+      port: PORT,
+      environment: process.env.NODE_ENV || 'development',
+      cacheEnabled: cache.getCacheStats().enabled,
+      models: Object.keys(CURATED_MODELS).length
+    });
+  });
+}
+
+// Handle graceful shutdown
+process.on('SIGTERM', async () => {
+  logger.info('SIGTERM received, shutting down gracefully');
+  await cache.closeRedis();
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  logger.info('SIGINT received, shutting down gracefully');
+  await cache.closeRedis();
+  process.exit(0);
+});
+
+startServer().catch((error) => {
+  logger.error('Failed to start server', { error: error.message, stack: error.stack });
+  process.exit(1);
 });

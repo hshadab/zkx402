@@ -22,6 +22,7 @@
  */
 
 const { verifyPayment, formatPrice, getPaymentInfo, PAYMENT_WALLET, BASE_MAINNET, USDC_BASE } = require('./base-payment');
+const logger = require('./logger');
 
 const CURATED_MODELS = {
   simple_threshold: {
@@ -292,7 +293,10 @@ async function verifyZkmlProof(paymentData, modelId) {
       };
     }
 
-    console.log(`[x402] Verifying payment for ${modelId}: ${payload.paymentTxHash}`);
+    logger.info('Verifying x402 payment', {
+      modelId,
+      paymentTxHash: payload.paymentTxHash
+    });
 
     const paymentVerification = await verifyPayment(
       payload.paymentTxHash,
@@ -301,7 +305,11 @@ async function verifyZkmlProof(paymentData, modelId) {
     );
 
     if (!paymentVerification.isValid) {
-      console.log(`[x402] Payment verification failed: ${paymentVerification.invalidReason}`);
+      logger.warn('x402 payment verification failed', {
+        modelId,
+        reason: paymentVerification.invalidReason,
+        paymentTxHash: payload.paymentTxHash
+      });
       return {
         isValid: false,
         invalidReason: `Payment verification failed: ${paymentVerification.invalidReason}`,
@@ -309,7 +317,12 @@ async function verifyZkmlProof(paymentData, modelId) {
       };
     }
 
-    console.log(`[x402] Payment verified: ${formatPrice(model.price)} USDC from ${paymentVerification.details.sender}`);
+    logger.info('x402 payment verified', {
+      modelId,
+      amount: formatPrice(model.price),
+      sender: paymentVerification.details.sender,
+      paymentTxHash: payload.paymentTxHash
+    });
 
     // Step 2: Verify zkML proof
     if (!payload.zkmlProof) {
@@ -342,7 +355,11 @@ async function verifyZkmlProof(paymentData, modelId) {
     // TODO: Implement actual JOLT Atlas cryptographic proof verification
     // For now, we verify the structure and trust the proof
 
-    console.log(`[x402] zkML proof verified: approved=${proof.approved}`);
+    logger.info('x402 zkML proof verified', {
+      modelId,
+      approved: proof.approved,
+      output: proof.output
+    });
 
     // Both payment and proof verified!
     return {
@@ -354,7 +371,11 @@ async function verifyZkmlProof(paymentData, modelId) {
     };
 
   } catch (error) {
-    console.error(`[x402] Verification error:`, error);
+    logger.error('x402 verification error', {
+      modelId,
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
     return {
       isValid: false,
       invalidReason: `Verification error: ${error.message}`
