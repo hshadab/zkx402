@@ -805,6 +805,29 @@ if (fs.existsSync(distPath)) {
   });
 }
 
+// ========== AGENT DISCOVERY ENDPOINTS ==========
+
+// Serve OpenAPI specification
+app.get('/openapi.yaml', (req, res) => {
+  res.sendFile(path.join(__dirname, 'openapi.yaml'));
+});
+
+app.get('/openapi.json', (req, res) => {
+  // Convert YAML to JSON on the fly
+  const yaml = require('js-yaml');
+  const openapi = yaml.load(fs.readFileSync(path.join(__dirname, 'openapi.yaml'), 'utf8'));
+  res.json(openapi);
+});
+
+// Serve AgentCard for AP2 discoverability
+app.get('/.well-known/agentcard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'agentcard.json'));
+});
+
+app.get('/agentcard.json', (req, res) => {
+  res.sendFile(path.join(__dirname, 'agentcard.json'));
+});
+
 // Add cache stats endpoint
 app.get('/api/cache/stats', (req, res) => {
   try {

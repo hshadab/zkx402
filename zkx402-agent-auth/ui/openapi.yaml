@@ -1,0 +1,759 @@
+openapi: 3.0.3
+info:
+  title: zkX402 Agent Authorization API
+  version: 1.3.0
+  description: |
+    Privacy-preserving authorization for AI agents using JOLT Atlas zkML proofs with Base USDC payments.
+
+    ## Features
+    - Zero-knowledge proof-based authorization
+    - x402 protocol compliant payment flow
+    - 14 production-ready authorization models
+    - Base USDC micropayments
+    - Agent-to-agent commerce ready
+
+    ## For AI Agents
+    This API is designed for autonomous agent integration:
+    - Discovery via `/.well-known/x402`
+    - Machine-readable pricing and schemas
+    - Async proof generation with webhooks
+    - Deterministic payment verification
+
+  contact:
+    name: zkX402 Support
+    url: https://github.com/hshadab/zkx402
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://zkx402-agent-auth.onrender.com
+    description: Production server
+  - url: http://localhost:3001
+    description: Local development server
+
+externalDocs:
+  description: Full Documentation
+  url: https://github.com/hshadab/zkx402
+
+tags:
+  - name: x402
+    description: x402 protocol endpoints for agent payments
+  - name: discovery
+    description: Service discovery and capability advertisement
+  - name: policies
+    description: Authorization policy management
+  - name: proofs
+    description: zkML proof generation and verification
+  - name: webhooks
+    description: Webhook management for async operations
+  - name: analytics
+    description: Usage analytics and metrics
+
+security:
+  - x402Payment: []
+
+paths:
+  /.well-known/x402:
+    get:
+      summary: x402 Service Discovery
+      description: |
+        Primary discovery endpoint for AI agents. Returns service capabilities,
+        pricing, available models, and payment information.
+
+        **For Agents:** Start here to discover what this service offers.
+      tags: [discovery]
+      operationId: getX402Discovery
+      responses:
+        '200':
+          description: Service discovery information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/X402Discovery'
+              example:
+                service: "zkX402 Privacy-Preserving Authorization for AI Agents"
+                version: "1.3.0"
+                status: "production"
+                x402Version: 1
+                capabilities:
+                  zkml_proofs: true
+                  max_model_params: 1024
+                  supported_onnx_ops: ["Gather", "Greater", "Less", "MatMul"]
+                pricing:
+                  currency: "USDC"
+                  network: "base"
+                  chainId: 8453
+                  wallet: "0x2b04D59EdC8Ddfc9b5190902BAf7a2857a103c91"
+                endpoints:
+                  list_policies: "/api/policies"
+                  generate_proof: "/api/generate-proof"
+                  authorize: "/x402/authorize/:modelId"
+                pre_built_policies:
+                  - id: "simple_threshold"
+                    name: "Simple Threshold"
+                    price_usdc: "0.001"
+                    avg_proof_time: "1-6.5 min"
+
+  /api/policies:
+    get:
+      summary: List Available Authorization Policies
+      description: |
+        Returns all available authorization policies/models with their schemas,
+        pricing, and input requirements.
+
+        **For Agents:** Use this to discover available authorization logic.
+      tags: [policies]
+      operationId: listPolicies
+      responses:
+        '200':
+          description: List of authorization policies
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  policies:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Policy'
+                  totalPolicies:
+                    type: integer
+                    example: 14
+
+  /api/policies/{policyId}/schema:
+    get:
+      summary: Get Policy Schema
+      description: |
+        Returns the input schema for a specific policy, including required fields,
+        types, and validation rules.
+
+        **For Agents:** Use this to understand what inputs are required.
+      tags: [policies]
+      operationId: getPolicySchema
+      parameters:
+        - name: policyId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: simple_threshold
+      responses:
+        '200':
+          description: Policy schema
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicySchema'
+        '404':
+          description: Policy not found
+
+  /api/policies/{policyId}/simulate:
+    post:
+      summary: Simulate Policy (Fast, No Proof)
+      description: |
+        Instantly simulate policy execution without generating a proof.
+        Returns the authorization decision in <1ms.
+
+        **For Agents:** Use this for testing before paying for a proof.
+      tags: [policies]
+      operationId: simulatePolicy
+      parameters:
+        - name: policyId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                inputs:
+                  type: object
+                  additionalProperties: true
+            example:
+              inputs:
+                amount: 100
+                balance: 500
+      responses:
+        '200':
+          description: Simulation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  approved:
+                    type: boolean
+                  output:
+                    type: number
+                  policyId:
+                    type: string
+                  simulationTime:
+                    type: string
+
+  /api/generate-proof:
+    post:
+      summary: Generate zkML Proof
+      description: |
+        Generate a cryptographic proof of policy execution. Takes 1-8 minutes.
+
+        **Free Tier:** 5 proofs per day per IP
+        **Paid:** Unlimited via x402 protocol
+
+        **For Agents:** For async operation, provide webhook_id.
+      tags: [proofs]
+      operationId: generateProof
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProofRequest'
+      responses:
+        '200':
+          description: Proof generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProofResult'
+        '429':
+          description: Rate limit exceeded (free tier)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+
+  /x402/authorize/{modelId}:
+    post:
+      summary: x402 Authorized Proof Generation
+      description: |
+        Generate proof with x402 payment. Returns 402 if payment missing/invalid.
+
+        **Payment Flow:**
+        1. POST without X-PAYMENT header → receive 402 with payment requirements
+        2. Send USDC payment on Base
+        3. POST with X-PAYMENT header containing tx hash and proof
+        4. Receive authorized proof
+
+        **For Agents:** This is the primary x402 endpoint.
+      tags: [x402]
+      operationId: authorizeWithPayment
+      parameters:
+        - name: modelId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: X-PAYMENT
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Base64-encoded payment payload
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                inputs:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Authorization successful
+          headers:
+            X-PAYMENT-RESPONSE:
+              schema:
+                type: string
+              description: Base64-encoded payment response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationResult'
+        '402':
+          description: Payment required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentRequired'
+
+  /x402/supported:
+    get:
+      summary: List Supported Payment Schemes
+      description: |
+        Returns supported (scheme, network) pairs for x402 facilitator discovery.
+      tags: [x402]
+      operationId: getSupportedSchemes
+      responses:
+        '200':
+          description: Supported schemes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  x402Version:
+                    type: integer
+                  supported:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SupportedScheme'
+
+  /x402/verify:
+    post:
+      summary: Verify Payment (Facilitator Endpoint)
+      description: |
+        Verify payment payload without settling. Facilitator endpoint.
+      tags: [x402]
+      operationId: verifyPayment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyRequest'
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationResult'
+
+  /api/webhooks:
+    post:
+      summary: Register Webhook
+      description: |
+        Register a webhook URL for async proof generation notifications.
+
+        **For Agents:** Use this for long-running proof operations.
+      tags: [webhooks]
+      operationId: registerWebhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookRegistration'
+      responses:
+        '201':
+          description: Webhook registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  webhook_id:
+                    type: string
+                  url:
+                    type: string
+                  created_at:
+                    type: string
+                    format: date-time
+
+  /api/cache/stats:
+    get:
+      summary: Get Cache Statistics
+      description: Cache performance metrics (hits, misses, hit rate)
+      tags: [analytics]
+      operationId: getCacheStats
+      responses:
+        '200':
+          description: Cache statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CacheStats'
+
+  /health:
+    get:
+      summary: Health Check
+      description: Service health status
+      tags: [discovery]
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  service:
+                    type: string
+                  models:
+                    type: integer
+
+components:
+  schemas:
+    X402Discovery:
+      type: object
+      required:
+        - service
+        - version
+        - status
+        - x402Version
+        - capabilities
+        - pricing
+        - endpoints
+      properties:
+        service:
+          type: string
+        version:
+          type: string
+        status:
+          type: string
+          enum: [production, staging, development]
+        lastUpdated:
+          type: string
+          format: date
+        x402Version:
+          type: integer
+        capabilities:
+          type: object
+          properties:
+            zkml_proofs:
+              type: boolean
+            max_model_params:
+              type: integer
+            max_operations:
+              type: integer
+            proof_time_range:
+              type: string
+            supported_onnx_ops:
+              type: array
+              items:
+                type: string
+        pricing:
+          type: object
+          properties:
+            currency:
+              type: string
+            network:
+              type: string
+            chainId:
+              type: integer
+            wallet:
+              type: string
+            tokenAddress:
+              type: string
+        endpoints:
+          type: object
+          additionalProperties:
+            type: string
+        pre_built_policies:
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicySummary'
+
+    Policy:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        useCase:
+          type: string
+        inputs:
+          type: array
+          items:
+            type: string
+        price:
+          type: string
+          description: Price in USDC atomic units
+        priceUSDC:
+          type: string
+          description: Human-readable price (e.g., "0.001 USDC")
+        operations:
+          type: integer
+        proofTime:
+          type: string
+        authorizeEndpoint:
+          type: string
+
+    PolicySummary:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        price_usdc:
+          type: string
+        avg_proof_time:
+          type: string
+
+    PolicySchema:
+      type: object
+      properties:
+        policyId:
+          type: string
+        name:
+          type: string
+        inputs:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              type:
+                type: string
+              required:
+                type: boolean
+              description:
+                type: string
+              minimum:
+                type: number
+              maximum:
+                type: number
+        output:
+          type: object
+          properties:
+            type:
+              type: string
+            description:
+              type: string
+        examples:
+          type: array
+          items:
+            type: object
+
+    ProofRequest:
+      type: object
+      required:
+        - model
+        - inputs
+      properties:
+        model:
+          type: string
+          description: Policy/model ID
+        inputs:
+          type: object
+          additionalProperties: true
+        webhook_id:
+          type: string
+          description: Optional webhook ID for async notifications
+
+    ProofResult:
+      type: object
+      properties:
+        approved:
+          type: boolean
+        output:
+          type: number
+        verification:
+          type: object
+        proofSize:
+          type: string
+        verificationTime:
+          type: string
+        proofTime:
+          type: integer
+          description: Proof generation time in milliseconds
+        operations:
+          type: integer
+        zkmlProof:
+          type: object
+        modelId:
+          type: string
+        modelName:
+          type: string
+        cached:
+          type: boolean
+        cachedAt:
+          type: string
+          format: date-time
+        request_id:
+          type: string
+        x402Payment:
+          type: object
+          properties:
+            header:
+              type: string
+              description: Base64-encoded payment response header
+
+    AuthorizationResult:
+      type: object
+      properties:
+        authorized:
+          type: boolean
+        modelId:
+          type: string
+        modelName:
+          type: string
+        proof:
+          type: object
+          properties:
+            verified:
+              type: boolean
+            approved:
+              type: boolean
+            output:
+              type: number
+        timestamp:
+          type: string
+          format: date-time
+
+    PaymentRequired:
+      type: object
+      properties:
+        x402Version:
+          type: integer
+        accepts:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentRequirement'
+        error:
+          type: string
+
+    PaymentRequirement:
+      type: object
+      properties:
+        scheme:
+          type: string
+        network:
+          type: string
+        resource:
+          type: string
+        maxAmountRequired:
+          type: string
+        asset:
+          type: object
+          properties:
+            address:
+              type: string
+            symbol:
+              type: string
+            decimals:
+              type: integer
+        payTo:
+          type: string
+        extra:
+          type: object
+          properties:
+            modelId:
+              type: string
+            modelName:
+              type: string
+            description:
+              type: string
+            inputs:
+              type: array
+              items:
+                type: string
+
+    SupportedScheme:
+      type: object
+      properties:
+        scheme:
+          type: string
+        network:
+          type: string
+        description:
+          type: string
+        features:
+          type: array
+          items:
+            type: string
+        paymentToken:
+          type: object
+          properties:
+            symbol:
+              type: string
+            address:
+              type: string
+            decimals:
+              type: integer
+            network:
+              type: string
+            chainId:
+              type: integer
+
+    VerifyRequest:
+      type: object
+      required:
+        - paymentHeader
+        - paymentRequirements
+      properties:
+        paymentHeader:
+          type: string
+        paymentRequirements:
+          type: object
+
+    VerificationResult:
+      type: object
+      properties:
+        isValid:
+          type: boolean
+        invalidReason:
+          type: string
+        details:
+          type: object
+
+    WebhookRegistration:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
+          format: uri
+        events:
+          type: array
+          items:
+            type: string
+            enum: [proof.completed, proof.failed]
+
+    CacheStats:
+      type: object
+      properties:
+        hits:
+          type: integer
+        misses:
+          type: integer
+        errors:
+          type: integer
+        hitRate:
+          type: string
+        enabled:
+          type: boolean
+        connected:
+          type: boolean
+
+    RateLimitError:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        resetTime:
+          type: string
+        upgradeOptions:
+          type: object
+
+  securitySchemes:
+    x402Payment:
+      type: apiKey
+      in: header
+      name: X-PAYMENT
+      description: |
+        Base64-encoded x402 payment payload containing USDC transaction hash
+        and zkML proof data.
