@@ -3,6 +3,8 @@
  * Tracks API usage, payments, and generates metrics
  */
 
+const CONSTANTS = require('./constants');
+
 class AnalyticsManager {
   constructor() {
     // In-memory storage (can be replaced with database)
@@ -70,8 +72,8 @@ class AnalyticsManager {
    */
   getStats() {
     const now = new Date();
-    const last24h = new Date(now - 24 * 60 * 60 * 1000);
-    const last7d = new Date(now - 7 * 24 * 60 * 60 * 1000);
+    const last24h = new Date(now - CONSTANTS.ANALYTICS.WINDOW_24H_MS);
+    const last7d = new Date(now - CONSTANTS.ANALYTICS.WINDOW_7D_MS);
 
     // Filter requests by time period
     const requests24h = this.requests.filter(r => new Date(r.timestamp) > last24h);

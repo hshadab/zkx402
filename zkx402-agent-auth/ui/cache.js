@@ -1,11 +1,12 @@
 const redis = require('redis');
 const crypto = require('crypto');
 const logger = require('./logger');
+const CONSTANTS = require('./constants');
 
 // Redis configuration
 const REDIS_ENABLED = process.env.REDIS_ENABLED !== 'false';
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
-const CACHE_TTL = parseInt(process.env.CACHE_TTL || '86400', 10); // 24 hours default
+const CACHE_TTL = parseInt(process.env.CACHE_TTL || String(CONSTANTS.CACHE.TTL_SECONDS), 10);
 const CACHE_PREFIX = 'zkx402:proof:';
 
 let redisClient = null;

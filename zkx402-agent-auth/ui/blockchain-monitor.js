@@ -4,6 +4,8 @@
  */
 
 const { ethers } = require('ethers');
+const logger = require('./logger');
+const CONSTANTS = require('./constants');
 
 // Base Mainnet Configuration
 const BASE_RPC_URL = 'https://mainnet.base.org';
@@ -31,15 +33,15 @@ class BlockchainMonitor {
    */
   async initialize() {
     try {
-      console.log('🔗 Initializing blockchain monitor for Base network...');
+      logger.info('Initializing blockchain monitor for Base network');
 
       // Get current block
       const currentBlock = await this.provider.getBlockNumber();
-      console.log(`📦 Current Base block: ${currentBlock}`);
+      logger.info('Current Base block', { currentBlock });
 
       // Fetch transactions from last 24 hours (~43,200 blocks at 2s/block)
       // Reduced from 7 days to avoid RPC rate limits
-      const blocksToScan = 43200; // ~24 hours
+      const blocksToScan = CONSTANTS.BLOCKCHAIN.BLOCKS_24H;
       const fromBlock = Math.max(0, currentBlock - blocksToScan);
 
       await this.fetchTransactionsChunked(fromBlock, currentBlock);
@@ -47,9 +49,9 @@ class BlockchainMonitor {
       this.lastFetchedBlock = currentBlock;
       this.isInitialized = true;
 
-      console.log(`✅ Blockchain monitor initialized. Found ${this.cachedTransactions.length} transactions.`);
+      logger.info('Blockchain monitor initialized', { transactionCount: this.cachedTransactions.length });
     } catch (error) {
-      console.error('❌ Failed to initialize blockchain monitor:', error.message);
+      logger.error('Failed to initialize blockchain monitor', { error: error.message });
     }
   }
 
@@ -57,10 +59,10 @@ class BlockchainMonitor {
    * Fetch transactions in chunks to avoid RPC rate limits
    */
   async fetchTransactionsChunked(fromBlock, toBlock) {
-    const CHUNK_SIZE = 10000; // Process 10k blocks at a time (~5.5 hours)
+    const CHUNK_SIZE = CONSTANTS.BLOCKCHAIN.CHUNK_SIZE;
     let currentFrom = fromBlock;
 
-    console.log(`🔍 Scanning blocks ${fromBlock} to ${toBlock} in chunks of ${CHUNK_SIZE}...`);
+    logger.info('Scanning blocks in chunks', { fromBlock, toBlock, chunkSize: CHUNK_SIZE });
 
     while (currentFrom < toBlock) {
       const currentTo = Math.min(currentFrom + CHUNK_SIZE, toBlock);
@@ -68,13 +70,13 @@ class BlockchainMonitor {
 
       // Small delay to avoid rate limiting
       if (currentTo < toBlock) {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, CONSTANTS.BLOCKCHAIN.SCAN_DELAY_MS));
       }
 
       currentFrom = currentTo + 1;
     }
 
-    console.log(`✅ Finished scanning. Found ${this.cachedTransactions.length} total transactions`);
+    logger.info('Finished scanning blocks', { totalTransactions: this.cachedTransactions.length });
   }
 
   /**
@@ -82,14 +84,14 @@ class BlockchainMonitor {
    */
   async fetchTransactions(fromBlock, toBlock) {
     try {
-      console.log(`  📦 Chunk: blocks ${fromBlock} to ${toBlock}`);
+      logger.debug('Fetching chunk', { fromBlock, toBlock });
 
       // Query Transfer events where 'to' is our payment wallet
       const filter = this.usdcContract.filters.Transfer(null, PAYMENT_WALLET);
       const events = await this.usdcContract.queryFilter(filter, fromBlock, toBlock);
 
       if (events.length > 0) {
-        console.log(`  📋 Found ${events.length} transfer events in this chunk`);
+        logger.info('Found transfer events in chunk', { eventCount: events.length, fromBlock, toBlock });
       }
 
       for (const event of events) {
@@ -122,7 +124,7 @@ class BlockchainMonitor {
         new Date(b.timestamp) - new Date(a.timestamp)
       );
     } catch (error) {
-      console.error(`  ❌ Error fetching chunk ${fromBlock}-${toBlock}:`, error.message);
+      logger.error('Error fetching chunk', { fromBlock, toBlock, error: error.message });
       // Continue even if one chunk fails
     }
   }
@@ -144,7 +146,7 @@ class BlockchainMonitor {
         this.lastFetchedBlock = currentBlock;
       }
     } catch (error) {
-      console.error('❌ Error refreshing transactions:', error.message);
+      logger.error('Error refreshing transactions', { error: error.message });
     }
   }
 
@@ -186,7 +188,7 @@ class BlockchainMonitor {
       const balance = await this.usdcContract.balanceOf(PAYMENT_WALLET);
       currentBalance = ethers.formatUnits(balance, 6);
     } catch (error) {
-      console.error('Failed to fetch wallet balance:', error.message);
+      logger.error('Failed to fetch wallet balance', { error: error.message });
     }
 
     return {

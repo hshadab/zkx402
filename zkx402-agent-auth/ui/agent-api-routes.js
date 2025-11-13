@@ -3,9 +3,10 @@
  * Provides machine-readable policy metadata for autonomous agents
  */
 
-const { CURATED_MODELS } = require('./x402-middleware');
+const { CURATED_MODELS, INPUT_DESCRIPTIONS } = require('./models.config');
 const { formatPrice } = require('./base-payment');
 const webhookManager = require('./webhook-manager');
+const logger = require('./logger');
 
 // Base URL (will be passed from server.js)
 let BASE_URL = 'http://localhost:3001';
@@ -16,97 +17,13 @@ function setBaseUrl(url) {
 
 // Helper function to get example inputs
 function getExampleInputs(modelId, scenario) {
-  const examples = {
-    simple_threshold: {
-      approve: { amount: 5000, balance: 10000 },
-      deny: { amount: 15000, balance: 10000 }
-    },
-    percentage_limit: {
-      approve: { amount: 5000, balance: 100000, max_percentage: 10 },
-      deny: { amount: 15000, balance: 100000, max_percentage: 10 }
-    },
-    vendor_trust: {
-      approve: { vendor_trust: 75, min_trust: 50 },
-      deny: { vendor_trust: 30, min_trust: 50 }
-    },
-    velocity_1h: {
-      approve: { amount: 5000, spent_1h: 10000, limit_1h: 20000 },
-      deny: { amount: 15000, spent_1h: 10000, limit_1h: 20000 }
-    },
-    velocity_24h: {
-      approve: { amount: 5000, spent_24h: 20000, limit_24h: 50000 },
-      deny: { amount: 40000, spent_24h: 20000, limit_24h: 50000 }
-    },
-    daily_limit: {
-      approve: { amount: 10000, daily_spent: 5000, daily_cap: 20000 },
-      deny: { amount: 20000, daily_spent: 5000, daily_cap: 20000 }
-    },
-    age_gate: {
-      approve: { age: 25, min_age: 21 },
-      deny: { age: 18, min_age: 21 }
-    },
-    multi_factor: {
-      approve: { amount: 5000, balance: 100000, spent_24h: 20000, limit_24h: 50000, vendor_trust: 75, min_trust: 50 },
-      deny: { amount: 5000, balance: 3000, spent_24h: 20000, limit_24h: 50000, vendor_trust: 75, min_trust: 50 }
-    },
-    composite_scoring: {
-      approve: { amount: 5000, balance: 100000, vendor_trust: 75, user_history: 80 },
-      deny: { amount: 5000, balance: 6000, vendor_trust: 20, user_history: 30 }
-    },
-    risk_neural: {
-      approve: { amount: 5000, balance: 100000, velocity_1h: 5000, velocity_24h: 20000, vendor_trust: 75 },
-      deny: { amount: 50000, balance: 60000, velocity_1h: 15000, velocity_24h: 80000, vendor_trust: 30 }
-    },
-    test_less: {
-      approve: { value_a: 5, value_b: 10 },
-      deny: { value_a: 10, value_b: 5 }
-    },
-    test_identity: {
-      approve: { value: 42 },
-      deny: { value: 100 }
-    },
-    test_clip: {
-      approve: { value: 5, min: 0, max: 10 },
-      deny: { value: 15, min: 0, max: 10 }
-    },
-    test_slice: {
-      approve: { start: 0, end: 3 },
-      deny: { start: 2, end: 5 }
-    }
-  };
-
-  return examples[modelId]?.[scenario] || {};
+  const model = CURATED_MODELS[modelId];
+  return model?.examples?.[scenario] || {};
 }
 
 // Helper function to get input descriptions
 function getInputDescription(modelId, inputName) {
-  const descriptions = {
-    amount: 'Transaction amount to authorize',
-    balance: 'Current account balance',
-    max_percentage: 'Maximum percentage of balance allowed',
-    vendor_trust: 'Vendor reputation score (0-100)',
-    min_trust: 'Minimum required trust score',
-    spent_1h: 'Amount spent in last hour',
-    limit_1h: 'Hourly spending limit',
-    spent_24h: 'Amount spent in last 24 hours',
-    limit_24h: 'Daily spending limit',
-    daily_spent: 'Amount spent today',
-    daily_cap: 'Maximum daily spending allowed',
-    age: 'User age in years',
-    min_age: 'Minimum required age',
-    user_history: 'User history score (0-100)',
-    velocity_1h: 'Spending velocity in last hour',
-    velocity_24h: 'Spending velocity in last 24 hours',
-    value_a: 'First value for comparison',
-    value_b: 'Second value for comparison',
-    value: 'Input value',
-    min: 'Minimum clip value',
-    max: 'Maximum clip value',
-    start: 'Slice start index',
-    end: 'Slice end index'
-  };
-
-  return descriptions[inputName] || `Input parameter: ${inputName}`;
+  return INPUT_DESCRIPTIONS[inputName] || `Input parameter: ${inputName}`;
 }
 
 // Register routes with Express app
@@ -315,7 +232,7 @@ function registerAgentRoutes(app) {
         }
       });
     } catch (error) {
-      console.error('Simulation error:', error);
+      logger.error('Simulation error', { policyId: id, error: error.message });
       res.status(500).json({
         error: 'Simulation failed',
         details: error.message,

@@ -4,6 +4,8 @@
  */
 
 const axios = require('axios');
+const logger = require('./logger');
+const CONSTANTS = require('./constants');
 
 class WebhookManager {
   constructor() {
@@ -13,9 +15,63 @@ class WebhookManager {
   }
 
   /**
+   * Validate webhook URL
+   * @throws {Error} if URL is invalid or not allowed
+   */
+  validateWebhookUrl(callbackUrl) {
+    try {
+      const url = new URL(callbackUrl);
+
+      // Only allow HTTP/HTTPS
+      if (!['http:', 'https:'].includes(url.protocol)) {
+        throw new Error('Only HTTP and HTTPS protocols are allowed');
+      }
+
+      // Block internal/private IP addresses to prevent SSRF
+      const hostname = url.hostname.toLowerCase();
+
+      // Block localhost
+      if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') {
+        throw new Error('Localhost URLs are not allowed');
+      }
+
+      // Block private IP ranges
+      if (hostname.startsWith('192.168.') ||
+          hostname.startsWith('10.') ||
+          hostname.startsWith('172.16.') || hostname.startsWith('172.17.') ||
+          hostname.startsWith('172.18.') || hostname.startsWith('172.19.') ||
+          hostname.startsWith('172.20.') || hostname.startsWith('172.21.') ||
+          hostname.startsWith('172.22.') || hostname.startsWith('172.23.') ||
+          hostname.startsWith('172.24.') || hostname.startsWith('172.25.') ||
+          hostname.startsWith('172.26.') || hostname.startsWith('172.27.') ||
+          hostname.startsWith('172.28.') || hostname.startsWith('172.29.') ||
+          hostname.startsWith('172.30.') || hostname.startsWith('172.31.')) {
+        throw new Error('Private network URLs are not allowed');
+      }
+
+      // Block metadata endpoints
+      if (hostname === '169.254.169.254') {
+        throw new Error('Cloud metadata URLs are not allowed');
+      }
+
+      return true;
+    } catch (error) {
+      if (error instanceof TypeError) {
+        throw new Error('Invalid URL format');
+      }
+      throw error;
+    }
+  }
+
+  /**
    * Register a webhook for proof completion notifications
    */
   registerWebhook(webhookId, callbackUrl, metadata = {}) {
+    // Validate URL before registering
+    this.validateWebhookUrl(callbackUrl);
+
+    logger.info('Registering webhook', { webhookId, callbackUrl });
+
     this.webhooks.set(webhookId, {
       id: webhookId,
       callbackUrl,
@@ -53,7 +109,7 @@ class WebhookManager {
   async triggerWebhook(webhookId, proofResult) {
     const webhook = this.webhooks.get(webhookId);
     if (!webhook) {
-      console.error(`Webhook not found: ${webhookId}`);
+      logger.error('Webhook not found', { webhookId });
       return null;
     }
 
@@ -78,21 +134,21 @@ class WebhookManager {
           'X-zkX402-Event': 'proof.completed',
           'X-zkX402-Webhook-ID': webhookId,
         },
-        timeout: 10000,
+        timeout: CONSTANTS.WEBHOOK.TIMEOUT_MS,
       });
 
       delivery.status = 'delivered';
       delivery.response_status = response.status;
       webhook.deliveries.push(delivery);
 
-      console.log(`Webhook delivered successfully: ${webhookId}`);
+      logger.info('Webhook delivered successfully', { webhookId, responseStatus: response.status });
       return delivery;
     } catch (error) {
       delivery.status = 'failed';
       delivery.error = error.message;
       webhook.deliveries.push(delivery);
 
-      console.error(`Webhook delivery failed: ${webhookId}`, error.message);
+      logger.error('Webhook delivery failed', { webhookId, error: error.message });
       return delivery;
     }
   }
@@ -118,7 +174,7 @@ class WebhookManager {
   async completeProofRequest(requestId, proofResult) {
     const request = this.proofRequests.get(requestId);
     if (!request) {
-      console.error(`Proof request not found: ${requestId}`);
+      logger.error('Proof request not found', { requestId });
       return null;
     }
 
